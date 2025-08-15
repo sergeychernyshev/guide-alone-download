@@ -1,0 +1,18 @@
+{
+  "name": "google-streetview-downloader",
+  "version": "1.0.0",
+  "description": "A script to download 360 photos from Google Street View.",
+  "main": "webapp.js",
+  "scripts": {
+    "start": "node webapp.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "googleapis": "^140.0.0"
+  }
+}
