@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google Street View Downloader</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        line-height: 1.6;
+        padding: 2em;
+        margin: auto;
+        background: #f7f7f7;
+      }
+      .container {
+        background: white;
+        padding: 2em;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+      }
+      .button,
+      button {
+        display: inline-block;
+        text-decoration: none;
+        background: #4285f4;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        margin-right: 10px;
+        line-height: 1.5;
+        box-sizing: border-box;
+      }
+      a {
+        color: #4285f4;
+        text-decoration: underline;
+      }
+      a.button {
+        color: white;
+        text-decoration: none;
+      }
+      .sort-link {
+        background: none;
+        color: #4285f4;
+        padding: 0;
+        border-radius: 0;
+        border: none;
+        font-size: inherit;
+        margin: 0;
+        line-height: inherit;
+        text-decoration: underline;
+      }
+      a.logout {
+        background: #db4437;
+      }
+      a.cancel {
+        background: #6c757d;
+      }
+      .update-btn {
+        background: #34a853;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1.5em;
+        margin-bottom: 1.5em;
+        table-layout: fixed;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        font-size: 14px;
+      }
+      th {
+        background-color: #f2f2f2;
+        white-space: nowrap;
+      }
+      td:first-child {
+        font-family: monospace;
+        font-size: 12px;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .status {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        color: white;
+        font-weight: 500;
+      }
+      .status.downloaded {
+        background-color: #34a853;
+      }
+      .status.not-downloaded {
+        background-color: #ea4335;
+      }
+      .pagination {
+        margin-top: 1em;
+        text-align: center;
+      }
+      .pagination a,
+      .pagination span {
+        color: #4285f4;
+        padding: 8px 16px;
+        text-decoration: none;
+        background: white;
+        border: 1px solid #ddd;
+        margin: 0 2px;
+      }
+      .pagination a:hover {
+        background-color: #f1f1f1;
+      }
+      .pagination span {
+        border: 1px solid transparent;
+      }
+      .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid #fff;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 10px;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+      form input[type="text"] {
+        flex-grow: 1;
+        margin-right: 10px;
+        padding: 9px 10px;
+        font-size: 16px;
+        line-height: 1.5;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        box-sizing: border-box;
+      }
+      .status-filter {
+        margin-top: 1em;
+        margin-bottom: 1em;
+      }
+      .status-filter span {
+      }
+      .status-filter a {
+        margin-right: 10px;
+        text-decoration: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+      }
+      .status-filter a.active {
+        background-color: #f2f2f2;
+        font-weight: bold;
+      }
+      .status-filter a.has-count {
+        padding-right: 5px;
+      }
+      .progress-bar-container {
+        width: 100%;
+        background-color: #f3f3f3;
+        border-radius: 5px;
+        margin: 1em 0;
+      }
+      .progress-bar {
+        width: 0%;
+        height: 30px;
+        background-color: #4caf50;
+        text-align: center;
+        line-height: 30px;
+        color: white;
+        border-radius: 5px;
+      }
+      #progress-text {
+        margin-top: 10px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Google Street View Photo Downloader</h1>
+      <% if (isLoggedIn) { %> <% if (locals.search) { %>
+      <h2><%= displayedPhotos %> Photos Found (of <%= totalPhotos %>)</h2>
+      <% } else { %>
+      <h2><%= totalPhotos %> Photos Found</h2>
+      <% } %> <% } else { %>
+      <p>
+        Please log in with your Google account to download or update photos.
+      </p>
+      <a href="/login" class="button">Login with Google</a>
+      <% } %> <% if (totalPhotos > 0) { %> <% if (isLoggedIn) { %>
+      <p>
+        This is a list of your photos. It indicates which ones have already been
+        downloaded to the
+        <code
+          ><% if (locals.folderLink) { %>
+          <a href="<%= folderLink %>" target="_blank"><%= folderName %></a>
+          <% } else {%> <%= folderName %> <% } %>
+        </code>
+        directory in your Google Drive.
+      </p>
+      <button onclick="confirmDownload()">Download All Missing Photos</button>
+      <button id="update-btn" onclick="updatePhotoList()" class="update-btn">
+        Update List from Google
+      </button>
+      <a href="/logout" class="logout button">Logout</a>
+
+      <div id="download-progress" style="display: none">
+        <h2>Downloading Photos</h2>
+        <p id="progress-text">Starting...</p>
+        <div style="display: flex; align-items: center; gap: 1em">
+          <div style="flex-grow: 1">
+            <p>Total Progress:</p>
+            <div class="progress-bar-container">
+              <div id="total-progress-bar" class="progress-bar">0%</div>
+            </div>
+          </div>
+          <button
+            id="cancel-btn"
+            onclick="cancelDownload()"
+            class="button cancel"
+          >
+            Cancel
+          </button>
+        </div>
+        <div style="display: flex; gap: 1em">
+          <div style="flex-grow: 1">
+            <p>Downloading from Google Street View:</p>
+            <div class="progress-bar-container">
+              <div id="download-bar" class="progress-bar">0%</div>
+            </div>
+          </div>
+          <div style="flex-grow: 1">
+            <p>Uploading to Google Drive:</p>
+            <div class="progress-bar-container">
+              <div id="upload-bar" class="progress-bar">0%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <% } %>
+
+      <form
+        action="/"
+        method="get"
+        style="margin-top: 1em; display: flex; align-items: center"
+      >
+        <input
+          type="text"
+          name="search"
+          placeholder="Search by place name..."
+          value="<%= locals.search || '' %>"
+        />
+        <button type="submit">Search</button>
+        <% if (locals.search) { %>
+        <a href="/" class="cancel button" style="margin-left: 10px">Clear</a>
+        <% } %>
+      </form>
+
+      <% if (isLoggedIn) { %>
+      <div class="status-filter">
+        <span>Filter by status:</span>
+        <a
+          href="/?status=all&search=<%= locals.search || '' %>"
+          class="<%= status === 'all' ? 'active' : '' %>"
+          >All</a
+        >
+        <a
+          href="/?status=downloaded&search=<%= locals.search || '' %>"
+          class="<%= status === 'downloaded' ? 'active' : '' %> has-count"
+          >Downloaded (<span id="downloaded-count"><%= downloadedCount %></span
+          >)</a
+        >
+        <a
+          href="/?status=not-downloaded&search=<%= locals.search || '' %>"
+          class="<%= status === 'not-downloaded' ? 'active' : '' %> has-count"
+          >Not Downloaded (<span id="not-downloaded-count"
+            ><%= notDownloadedCount %></span
+          >)</a
+        >
+      </div>
+      <% } %>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 25%">Photo ID</th>
+            <th style="width: 20%">Place Name</th>
+            <th style="width: 12%">
+              <%- buildSortLink("date", "Capture Time") %>
+            </th>
+            <th style="width: 12%">
+              <%- buildSortLink("views", "View Count") %>
+            </th>
+            <th style="width: 10%">Latitude</th>
+            <th style="width: 10%">Longitude</th>
+            <th style="width: 11%">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%- photoListHtml %>
+        </tbody>
+      </table>
+      <%- paginationHtml %> <% } else if (isLoggedIn) { %>
+      <p>You do not have any photos uploaded to Google Street View.</p>
+      <button id="update-btn" onclick="updatePhotoList()" class="update-btn">
+        Check for new photos
+      </button>
+      <a href="/logout" class="logout button">Logout</a>
+      <% } %>
+    </div>
+
+    <script>
+      window.addEventListener('DOMContentLoaded', (event) => {
+        const downloadState = <%- JSON.stringify(downloadState) %>;
+        if (downloadState.inProgress) {
+          document.getElementById('download-progress').style.display = 'block';
+          document.querySelector('.progress-bar-container').style.display = 'block';
+          document.getElementById('progress-text').style.display = 'block';
+          connectWebSocket();
+        }
+      });
+
+      function connectWebSocket() {
+        const downloadBar = document.getElementById("download-bar");
+        const uploadBar = document.getElementById("upload-bar");
+        const totalProgressBar = document.getElementById("total-progress-bar");
+        const progressText = document.getElementById("progress-text");
+
+        const ws = new WebSocket(`ws://${window.location.host}`);
+
+        ws.onopen = () => {
+          console.log("WebSocket connection established for download progress.");
+        };
+
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+
+          if (data.error) {
+            progressText.textContent = `Error: ${data.error}`;
+            return;
+          }
+
+          if (data.fileComplete) {
+            const downloadedCountSpan = document.getElementById('downloaded-count');
+            const notDownloadedCountSpan = document.getElementById('not-downloaded-count');
+            if (downloadedCountSpan && notDownloadedCountSpan) {
+              downloadedCountSpan.textContent = data.downloadedCount;
+              notDownloadedCountSpan.textContent = data.notDownloadedCount;
+            }
+          }
+
+          if (data.downloadProgress !== undefined) {
+            downloadBar.style.width = `${data.downloadProgress}%`;
+            downloadBar.textContent = `${data.downloadProgress}%`;
+          }
+
+          if (data.uploadProgress !== undefined) {
+            uploadBar.style.width = `${data.uploadProgress}%`;
+            uploadBar.textContent = `${data.uploadProgress}%`;
+          }
+
+          if (data.totalProgress !== undefined) {
+            totalProgressBar.style.width = `${data.totalProgress}%`;
+            totalProgressBar.textContent = `${data.totalProgress}%`;
+          }
+
+          if (data.message) {
+            progressText.textContent = data.message;
+          }
+
+          if (data.complete) {
+            downloadBar.style.width = "100%";
+            downloadBar.textContent = "100%";
+            uploadBar.style.width = "100%";
+            uploadBar.textContent = "100%";
+            totalProgressBar.style.width = "100%";
+            totalProgressBar.textContent = "100%";
+            ws.close();
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }
+        };
+
+        ws.onclose = () => {
+          console.log("WebSocket connection closed");
+        };
+
+        ws.onerror = (error) => {
+          console.error("WebSocket error:", error);
+          progressText.textContent =
+            "An error occurred. Check the console for details.";
+        };
+      }
+
+      function cancelDownload() {
+        fetch('/cancel-download', { method: 'POST' });
+      }
+
+      <% if (isLoggedIn) { %>
+      function confirmDownload() {
+        const missingPhotosCount = <%= missingPhotosCount %>;
+        if (missingPhotosCount > 10) {
+          if (!confirm(`You are about to download ${missingPhotosCount} photos. Are you sure you want to proceed?`)) {
+            return;
+          }
+        }
+        window.location.href = '/download';
+      }
+
+      function updatePhotoList() {
+          const updateBtn = document.getElementById('update-btn');
+          updateBtn.disabled = true;
+          updateBtn.innerHTML = '<div class="spinner"></div><span>Starting...</span>';
+
+          const ws = new WebSocket(`ws://${window.location.host}`);
+
+          ws.onopen = () => {
+              console.log('WebSocket connection established');
+              window.location.href = '/update';
+          };
+
+          ws.onmessage = (event) => {
+              const data = JSON.parse(event.data);
+              const messageSpan = updateBtn.querySelector('span');
+              if (messageSpan) {
+                  messageSpan.textContent = data.message;
+              }
+              if (data.complete) {
+                  ws.close();
+                  // The page will reload, so no need to re-enable the button here.
+              }
+          };
+
+          ws.onclose = () => {
+              console.log('WebSocket connection closed');
+          };
+
+          ws.onerror = (error) => {
+              console.error('WebSocket error:', error);
+              updateBtn.innerHTML = 'Error!';
+          };
+      }
+      <% } %>
+    </script>
+  </body>
+</html>
