@@ -124,6 +124,15 @@ async function listFiles(drive, folderId) {
   return allFiles;
 }
 
+async function findFile(drive, fileName, folderId) {
+  const res = await drive.files.list({
+    q: `name='${fileName}' and '${folderId}' in parents and trashed=false`,
+    fields: "files(id, name)",
+    spaces: "drive",
+  });
+  return res.data.files.length > 0 ? res.data.files[0] : null;
+}
+
 async function deleteFile(drive, fileId) {
   await drive.files.delete({
     fileId: fileId,
@@ -139,6 +148,7 @@ module.exports = {
   createFile,
   listFiles,
   deleteFile,
+  findFile,
   FOLDER_NAME,
   PHOTO_LIST_FILE_NAME,
 };

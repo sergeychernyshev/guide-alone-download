@@ -10,6 +10,7 @@ const indexRouter = require("./routes/index");
 const downloadRouter = require("./routes/download");
 const cancelRouter = require("./routes/cancel");
 const deleteDuplicatesRouter = require("./routes/delete-duplicates");
+const downloadPhotoRouter = require("./routes/download-photo");
 
 const { isTokenValid } = require("./oauth");
 const { setSocket } = require("./download-state");
@@ -117,6 +118,7 @@ async function initialize() {
   app.use("/download", downloadRouter);
   app.use("/cancel-download", cancelRouter);
   app.use("/delete-duplicates", deleteDuplicatesRouter);
+  app.use("/download-photo", downloadPhotoRouter);
 
   /**
    * Global error handler for the Express app.

@@ -184,6 +184,11 @@ router.get("/", async (req, res, next) => {
               ? '<span class="status downloaded">Downloaded</span>'
               : '<span class="status not-downloaded">Not Downloaded</span>'
           }</td>
+          <td>${
+            downloadedFiles.has(`${photo.photoId.id}.jpg`)
+              ? `<a href="/download-photo/${photo.photoId.id}" class="button" style="font-size: 12px; padding: 5px 10px;">Download</a>`
+              : ''
+          }</td>
         </tr>
       `
         )
