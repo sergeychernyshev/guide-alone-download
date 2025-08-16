@@ -1,6 +1,7 @@
 const express = require("express");
+const { Readable } = require("stream");
 const { getAuthenticatedClient, isLoggedIn } = require("../oauth");
-const { downloadPhoto } = require("../photo-manager");
+const { downloadPhoto, addExifData } = require("../photo-manager");
 const {
   getDriveClient,
   findOrCreateFolder,
@@ -24,16 +25,21 @@ router.get("/", async (req, res, next) => {
   const photos = req.session.photos;
   const downloadedPhotosCount = req.session.downloadedPhotos.length;
   const missingPhotosCount = req.session.missingPhotos.length;
-  
+
   resetState();
   updateState({ inProgress: true });
-  
+
   downloadAllPhotos(req, photos, downloadedPhotosCount, missingPhotosCount);
 
   res.redirect("/");
 });
 
-async function downloadAllPhotos(req, photos, downloadedPhotosCount, missingPhotosCount) {
+async function downloadAllPhotos(
+  req,
+  photos,
+  downloadedPhotosCount,
+  missingPhotosCount
+) {
   const progressCallback = (progress) => {
     updateState(progress);
   };
@@ -101,7 +107,9 @@ async function downloadAllPhotos(req, photos, downloadedPhotosCount, missingPhot
       }
 
       progressCallback({
-        message: `Processing photo ${downloadedPhotosCount + i + 1} of ${totalPhotoCount} (${fileName})...`,
+        message: `Processing photo ${
+          downloadedPhotosCount + i + 1
+        } of ${totalPhotoCount} (${fileName})...`,
         total: totalPhotos,
         current: i,
         photoId: photo.photoId.id,
@@ -109,7 +117,7 @@ async function downloadAllPhotos(req, photos, downloadedPhotosCount, missingPhot
         uploadProgress: 0,
       });
 
-      const { stream, size } = await downloadPhoto(
+      const { buffer } = await downloadPhoto(
         photo.downloadUrl,
         oAuth2Client,
         (percentage) => {
@@ -123,6 +131,10 @@ async function downloadAllPhotos(req, photos, downloadedPhotosCount, missingPhot
         });
         break;
       }
+
+      const photoWithExif = addExifData(buffer, photo);
+      const stream = Readable.from(photoWithExif);
+      const size = photoWithExif.length;
 
       await createFile(
         drive,
