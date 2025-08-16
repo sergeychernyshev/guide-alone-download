@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Google Street View Downloader</title>
+    <title>Google Maps 360 Photo Downloader</title>
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -205,7 +205,7 @@
   </head>
   <body>
     <div class="container">
-      <h1>Google Street View Photo Downloader</h1>
+      <h1>Google Maps 360 Photo Downloader</h1>
       <% if (isLoggedIn) { %> <% if (locals.search) { %>
       <h2><%= displayedPhotos %> Photos Found (of <%= totalPhotos %>)</h2>
       <% } else { %>
@@ -217,8 +217,8 @@
       <a href="/login" class="button">Login with Google</a>
       <% } %> <% if (totalPhotos > 0) { %> <% if (isLoggedIn) { %>
       <p>
-        This is a list of your photos. It indicates which ones have already been
-        downloaded to the
+        This is a list of your 360 photos on Google Maps. It indicates which
+        ones have already been backed up to the
         <code
           ><% if (locals.folderLink) { %>
           <a href="<%= folderLink %>" target="_blank"><%= folderName %></a>
@@ -228,7 +228,7 @@
       </p>
       <button onclick="confirmDownload()">Download All Missing Photos</button>
       <button id="update-btn" onclick="updatePhotoList()" class="update-btn">
-        Update List from Google
+        Update the List of Photos
       </button>
       <a href="/logout" class="logout button">Logout</a>
 
@@ -252,7 +252,7 @@
         </div>
         <div style="display: flex; gap: 1em">
           <div style="flex-grow: 1">
-            <p>Downloading from Google Street View:</p>
+            <p>Downloading 360 photos from Google Maps:</p>
             <div class="progress-bar-container">
               <div id="download-bar" class="progress-bar">0%</div>
             </div>
@@ -329,7 +329,7 @@
         </tbody>
       </table>
       <%- paginationHtml %> <% } else if (isLoggedIn) { %>
-      <p>You do not have any photos uploaded to Google Street View.</p>
+      <p>You do not have any photos uploaded 360 photos to Google Maps.</p>
       <button id="update-btn" onclick="updatePhotoList()" class="update-btn">
         Check for new photos
       </button>
