@@ -110,18 +110,24 @@ async function listFiles(drive, folderId) {
   do {
     const res = await drive.files.list({
       q: `'${folderId}' in parents and trashed=false and mimeType != 'application/vnd.google-apps.folder'`,
-      fields: "nextPageToken, files(id, name, mimeType)",
+      fields: "nextPageToken, files(id, name, mimeType, webViewLink)",
       spaces: "drive",
       pageToken: pageToken,
       pageSize: 1000,
     });
 
     for (const file of res.data.files) {
-      allFiles.push(file.name);
+      allFiles.push(file);
     }
     pageToken = res.data.nextPageToken;
   } while (pageToken);
   return allFiles;
+}
+
+async function deleteFile(drive, fileId) {
+  await drive.files.delete({
+    fileId: fileId,
+  });
 }
 
 module.exports = {
@@ -132,6 +138,7 @@ module.exports = {
   writeFileContent,
   createFile,
   listFiles,
+  deleteFile,
   FOLDER_NAME,
   PHOTO_LIST_FILE_NAME,
 };

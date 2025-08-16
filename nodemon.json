@@ -1,0 +1,6 @@
+{
+  "watch": ["src/"],
+  "ext": "js,json",
+  "ignore": ["src/views/"],
+  "exec": "node src/webapp.js"
+}

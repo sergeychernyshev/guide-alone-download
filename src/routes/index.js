@@ -62,10 +62,28 @@ router.get("/", async (req, res, next) => {
     const search = req.query.search || "";
     const status = req.query.status || "all";
 
-    const downloadedFiles = new Set(
-      loggedIn ? (await listFiles(drive, folderId)).map((f) => f) : []
-    );
+    const driveFiles = loggedIn ? await listFiles(drive, folderId) : [];
+    const drivePhotoCount = driveFiles.filter(f => f.name !== PHOTO_LIST_FILE_NAME).length;
+    const downloadedFiles = new Set(driveFiles.map((f) => f.name));
     const totalPhotosCount = photos.length;
+
+    const photoIdsFromStreetView = new Set(photos.map(p => `${p.photoId.id}.jpg`));
+    const driveOnlyFiles = driveFiles.filter(f => f.name !== PHOTO_LIST_FILE_NAME && !photoIdsFromStreetView.has(f.name));
+    const driveOnlyCount = driveOnlyFiles.length;
+
+    const duplicates = driveFiles.reduce((acc, file) => {
+      acc[file.name] = acc[file.name] || [];
+      acc[file.name].push(file);
+      return acc;
+    }, {});
+
+    const duplicateFiles = Object.keys(duplicates).reduce((acc, key) => {
+      if (duplicates[key].length > 1) {
+        acc[key] = duplicates[key];
+      }
+      return acc;
+    }, {});
+    const duplicateFilesCount = Object.keys(duplicateFiles).length;
 
     const downloadedPhotos = photos.filter((p) =>
       downloadedFiles.has(`${p.photoId.id}.jpg`)
@@ -141,6 +159,11 @@ router.get("/", async (req, res, next) => {
       downloadState: getState(),
       downloadedCount: loggedIn ? downloadedPhotos.length : 0,
       notDownloadedCount: loggedIn ? missingPhotos.length : 0,
+      driveOnlyCount: loggedIn ? driveOnlyCount : 0,
+      driveOnlyFiles: loggedIn ? driveOnlyFiles : [],
+      drivePhotoCount: loggedIn ? drivePhotoCount : 0,
+      duplicateFiles: loggedIn ? duplicateFiles : {},
+      duplicateFilesCount: loggedIn ? duplicateFilesCount : 0,
       folderName: folderName,
       photoListHtml: paginatedPhotos
         .map(

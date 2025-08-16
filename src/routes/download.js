@@ -5,6 +5,7 @@ const {
   getDriveClient,
   findOrCreateFolder,
   createFile,
+  listFiles,
   FOLDER_NAME,
 } = require("../drive-manager");
 const { updateState, resetState, getState } = require("../download-state");
@@ -43,6 +44,9 @@ async function downloadAllPhotos(req, photos, downloadedPhotosCount, missingPhot
     const folder = await findOrCreateFolder(drive, FOLDER_NAME);
     const folderId = folder.id;
 
+    const driveFiles = await listFiles(drive, folderId);
+    const existingFileNames = new Set(driveFiles.map((f) => f.name));
+
     const totalPhotos = photos.length;
     const totalPhotoCount = downloadedPhotosCount + missingPhotosCount;
     const initialProgress =
@@ -66,6 +70,36 @@ async function downloadAllPhotos(req, photos, downloadedPhotosCount, missingPhot
       }
       const photo = photos[i];
       const fileName = `${photo.photoId.id}.jpg`;
+
+      if (existingFileNames.has(fileName)) {
+        progressCallback({
+          message: `Skipping existing file: ${fileName}`,
+        });
+        if (req.session.missingPhotos && req.session.downloadedPhotos) {
+          const downloadedPhotoIndex = req.session.missingPhotos.findIndex(
+            (p) => p.photoId.id === photo.photoId.id
+          );
+          if (downloadedPhotoIndex > -1) {
+            const [downloadedPhoto] = req.session.missingPhotos.splice(
+              downloadedPhotoIndex,
+              1
+            );
+            req.session.downloadedPhotos.push(downloadedPhoto);
+          }
+        }
+        progressCallback({
+          fileComplete: true,
+          downloadedCount: req.session.downloadedPhotos.length,
+          notDownloadedCount: req.session.missingPhotos.length,
+          totalProgress: Math.round(
+            ((downloadedPhotosCount + i + 1) /
+              (downloadedPhotosCount + missingPhotosCount)) *
+              100
+          ),
+        });
+        continue;
+      }
+
       progressCallback({
         message: `Processing photo ${downloadedPhotosCount + i + 1} of ${totalPhotoCount} (${fileName})...`,
         total: totalPhotos,

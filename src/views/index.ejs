@@ -201,16 +201,42 @@
         margin-top: 10px;
         display: none;
       }
+      .accordion {
+        background-color: #eee;
+        color: #444;
+        cursor: pointer;
+        padding: 18px;
+        width: 100%;
+        border: none;
+        text-align: left;
+        outline: none;
+        font-size: 15px;
+        transition: 0.4s;
+      }
+
+      .active,
+      .accordion:hover {
+        background-color: #ccc;
+      }
+
+      .panel {
+        padding: 0 18px;
+        background-color: white;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <h1>Google Maps 360 Photo Downloader</h1>
-      <% if (isLoggedIn) { %> <% if (locals.search) { %>
-      <h2><%= displayedPhotos %> Photos Found (of <%= totalPhotos %>)</h2>
+      <% if (isLoggedIn) { %>
+      <h2>
+        <%= totalPhotos %> Street View Photos Found, and <%= drivePhotoCount %>
+        on Google Drive
+      </h2>
       <% } else { %>
-      <h2><%= totalPhotos %> Photos Found</h2>
-      <% } %> <% } else { %>
       <p>
         Please log in with your Google account to download or update photos.
       </p>
@@ -226,6 +252,51 @@
         </code>
         directory in your Google Drive.
       </p>
+      <% if (driveOnlyCount > 0) { %>
+      <p>
+        There are <%= driveOnlyCount %> photos in your Google Drive folder that
+        are no longer listed in Google Street View.
+        <button
+          id="toggle-drive-only-list"
+          class="button"
+          style="font-size: 12px; padding: 5px 10px; margin-left: 10px"
+        >
+          Show/Hide List
+        </button>
+      </p>
+      <div id="drive-only-list" class="panel">
+        <ul>
+          <% driveOnlyFiles.forEach(file => { %>
+          <li>
+            <a href="<%= file.webViewLink %>" target="_blank"
+              ><%= file.name %></a
+            >
+          </li>
+          <% }); %>
+        </ul>
+      </div>
+      <% } %>
+      <% if (duplicateFilesCount > 0) { %>
+        <p>
+          There are <%= duplicateFilesCount %> files with duplicate names in your Google Drive folder.
+          <button id="toggle-duplicate-files-list" class="button" style="font-size: 12px; padding: 5px 10px; margin-left: 10px;">Show/Hide List</button>
+          <button id="delete-duplicate-files" class="button" style="font-size: 12px; padding: 5px 10px; margin-left: 10px; background-color: #db4437;">Delete Duplicates</button>
+        </p>
+        <div id="duplicate-files-list" class="panel">
+          <ul>
+            <% Object.keys(duplicateFiles).forEach(filename => { %>
+              <li>
+                <strong><%= filename %></strong>
+                <ul>
+                  <% duplicateFiles[filename].forEach(file => { %>
+                    <li><a href="<%= file.webViewLink %>" target="_blank"><%= file.name %></a> (ID: <%= file.id %>)</li>
+                  <% }); %>
+                </ul>
+              </li>
+            <% }); %>
+          </ul>
+        </div>
+      <% } %>
       <button onclick="confirmDownload()">Download All Missing Photos</button>
       <button id="update-btn" onclick="updatePhotoList()" class="update-btn">
         Update the List of Photos
@@ -470,6 +541,56 @@
           };
       }
       <% } %>
+    </script>
+    <script>
+      document
+        .getElementById("toggle-drive-only-list")
+        ?.addEventListener("click", function () {
+          this.classList.toggle("active");
+          var panel = document.getElementById("drive-only-list");
+          if (panel.style.maxHeight) {
+            panel.style.maxHeight = null;
+          } else {
+            panel.style.maxHeight = panel.scrollHeight + "px";
+          }
+        });
+
+      document.getElementById('toggle-duplicate-files-list')?.addEventListener('click', function() {
+        this.classList.toggle("active");
+        var panel = document.getElementById('duplicate-files-list');
+        if (panel.style.maxHeight) {
+          panel.style.maxHeight = null;
+        } else {
+          panel.style.maxHeight = panel.scrollHeight + "px";
+        }
+      });
+
+      document.getElementById('delete-duplicate-files')?.addEventListener('click', function() {
+        const duplicateFiles = <%- JSON.stringify(duplicateFiles) %>;
+        const fileIdsToDelete = [];
+        for (const filename in duplicateFiles) {
+          const files = duplicateFiles[filename];
+          for (let i = 1; i < files.length; i++) {
+            fileIdsToDelete.push(files[i].id);
+          }
+        }
+
+        if (fileIdsToDelete.length > 0 && confirm(`Are you sure you want to delete ${fileIdsToDelete.length} duplicate files?`)) {
+          fetch('/delete-duplicates', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ fileIds: fileIdsToDelete }),
+          }).then(response => {
+            if (response.ok) {
+              window.location.reload();
+            } else {
+              alert('Error deleting files.');
+            }
+          });
+        }
+      });
     </script>
   </body>
 </html>

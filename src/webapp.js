@@ -9,6 +9,7 @@ const WebSocket = require("ws");
 const indexRouter = require("./routes/index");
 const downloadRouter = require("./routes/download");
 const cancelRouter = require("./routes/cancel");
+const deleteDuplicatesRouter = require("./routes/delete-duplicates");
 
 const { isTokenValid } = require("./oauth");
 const { setSocket } = require("./download-state");
@@ -115,6 +116,7 @@ async function initialize() {
   app.use("/", indexRouter);
   app.use("/download", downloadRouter);
   app.use("/cancel-download", cancelRouter);
+  app.use("/delete-duplicates", deleteDuplicatesRouter);
 
   /**
    * Global error handler for the Express app.
