@@ -50,24 +50,19 @@ async function downloadPhoto(photoUrl, authClient, progressCallback = () => {}) 
   const response = await axios({
     method: "GET",
     url: photoUrl,
-    responseType: "stream",
+    responseType: "arraybuffer",
     headers: {
       Authorization: `Bearer ${authClient.credentials.access_token}`,
     },
-  });
-
-  const totalLength = response.headers["content-length"];
-  let downloadedLength = 0;
-
-  response.data.on("data", (chunk) => {
-    downloadedLength += chunk.length;
-    if (totalLength) {
-      const percentage = Math.round((downloadedLength / totalLength) * 100);
+    onDownloadProgress: (progressEvent) => {
+      const percentage = Math.round(
+        (progressEvent.loaded * 100) / progressEvent.total
+      );
       progressCallback(percentage);
-    }
+    },
   });
 
-  return { stream: response.data, size: totalLength };
+  return { data: Buffer.from(response.data), size: response.data.length };
 }
 
 module.exports = { listAllPhotos, downloadPhoto };
