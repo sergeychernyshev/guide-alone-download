@@ -16,6 +16,7 @@
     "express-session": "^1.18.0",
     "googleapis": "^140.0.0",
     "memorystore": "^1.6.7",
+    "piexifjs": "^1.0.6",
     "ws": "^8.17.1"
   },
   "devDependencies": {

@@ -1,4 +1,6 @@
 const express = require("express");
+const piexif = require("piexifjs");
+const { Readable } = require("stream");
 const { getAuthenticatedClient, isLoggedIn } = require("../oauth");
 const { downloadPhoto } = require("../photo-manager");
 const {
@@ -109,7 +111,7 @@ async function downloadAllPhotos(req, photos, downloadedPhotosCount, missingPhot
         uploadProgress: 0,
       });
 
-      const { stream, size } = await downloadPhoto(
+      const { data, size } = await downloadPhoto(
         photo.downloadUrl,
         oAuth2Client,
         (percentage) => {
@@ -124,13 +126,33 @@ async function downloadAllPhotos(req, photos, downloadedPhotosCount, missingPhot
         break;
       }
 
+      const jpegData = data.toString("binary");
+      const exifObj = piexif.load(jpegData);
+
+      const lat = photo.pose.latLngPair.latitude;
+      const lng = photo.pose.latLngPair.longitude;
+
+      const gpsData = {
+        [piexif.GPSIFD.GPSLatitudeRef]: lat < 0 ? "S" : "N",
+        [piexif.GPSIFD.GPSLatitude]: degToDmsRational(Math.abs(lat)),
+        [piexif.GPSIFD.GPSLongitudeRef]: lng < 0 ? "W" : "E",
+        [piexif.GPSIFD.GPSLongitude]: degToDmsRational(Math.abs(lng)),
+      };
+
+      exifObj["GPS"] = gpsData;
+      const exifbytes = piexif.dump(exifObj);
+      const newData = piexif.insert(exifbytes, jpegData);
+      const newJpeg = Buffer.from(newData, "binary");
+
+      const stream = Readable.from(newJpeg);
+
       await createFile(
         drive,
         fileName,
         "image/jpeg",
         stream,
         folderId,
-        size,
+        newJpeg.length,
         (percentage) => {
           progressCallback({ uploadProgress: percentage });
         }
@@ -176,6 +198,19 @@ async function downloadAllPhotos(req, photos, downloadedPhotosCount, missingPhot
     });
     console.error(error);
   }
+}
+
+function degToDmsRational(deg) {
+  const d = Math.floor(deg);
+  const minFloat = (deg - d) * 60;
+  const m = Math.floor(minFloat);
+  const secFloat = (minFloat - m) * 60;
+  const s = Math.round(secFloat * 100);
+  return [
+    [d, 1],
+    [m, 1],
+    [s, 100],
+  ];
 }
 
 module.exports = router;
