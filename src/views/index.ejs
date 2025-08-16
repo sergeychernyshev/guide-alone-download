@@ -497,6 +497,14 @@
         fetch('/cancel-download', { method: 'POST' });
       }
 
+      function downloadSinglePhoto(photoId) {
+        document.getElementById('download-progress').style.display = 'block';
+        document.querySelector('.progress-bar-container').style.display = 'block';
+        document.getElementById('progress-text').style.display = 'block';
+        connectWebSocket();
+        fetch('/download-single/' + photoId, { method: 'GET' });
+      }
+
       <% if (isLoggedIn) { %>
       function confirmDownload() {
         const missingPhotosCount = <%= missingPhotosCount %>;
