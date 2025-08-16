@@ -62,6 +62,13 @@
       a.cancel {
         background: #6c757d;
       }
+      #cancel-btn {
+        background: #db4437;
+        height: 1.5em;
+        line-height: 1;
+        align-self: flex-end;
+        margin-bottom: 1em;
+      }
       .update-btn {
         background: #34a853;
       }
@@ -183,10 +190,10 @@
       }
       .progress-bar {
         width: 0%;
-        height: 30px;
+        height: 1.5em;
         background-color: #4caf50;
         text-align: center;
-        line-height: 30px;
+        line-height: 1.5em;
         color: white;
         border-radius: 5px;
       }
@@ -228,9 +235,9 @@
       <div id="download-progress" style="display: none">
         <h2>Downloading Photos</h2>
         <p id="progress-text">Starting...</p>
+        <p>Total Progress:</p>
         <div style="display: flex; align-items: center; gap: 1em">
           <div style="flex-grow: 1">
-            <p>Total Progress:</p>
             <div class="progress-bar-container">
               <div id="total-progress-bar" class="progress-bar">0%</div>
             </div>
