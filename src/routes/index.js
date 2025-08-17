@@ -171,14 +171,12 @@ router.get("/", async (req, res, next) => {
         <tr>
           <td><a href="${photo.shareLink}" target="_blank">${photo.photoId.id}</a></td>
           <td>${
-            photo.places && photo.places.length > 0
-              ? photo.places[0].name
-              : "N/A"
+            photo.places && photo.places.length > 0 && photo.places[0].name
+              ? `${photo.places[0].name}<br><small>${photo.pose.latLngPair.latitude.toFixed(4)}, ${photo.pose.latLngPair.longitude.toFixed(4)}</small>`
+              : `${photo.pose.latLngPair.latitude.toFixed(4)}, ${photo.pose.latLngPair.longitude.toFixed(4)}`
           }</td>
           <td>${new Date(photo.captureTime).toLocaleDateString()}</td>
           <td>${photo.viewCount || 0}</td>
-          <td>${photo.pose.latLngPair.latitude.toFixed(4)}</td>
-          <td>${photo.pose.latLngPair.longitude.toFixed(4)}</td>
           <td>${
             downloadedFiles.has(`${photo.photoId.id}.jpg`)
               ? '<span class="status downloaded">Downloaded</span>'
