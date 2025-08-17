@@ -180,7 +180,7 @@ router.get("/", async (req, res, next) => {
           <td>${
             downloadedFiles.has(`${photo.photoId.id}.jpg`)
               ? '<span class="status downloaded"><span class="status-text">Downloaded</span><span class="status-icon">✅</span></span>'
-              : '<span class="status not-downloaded">Not Downloaded</span>'
+              : '<span class="status not-downloaded"><span class="status-text">Not Downloaded</span><span class="status-icon">❌</span></span>'
           }</td>
           <td>
             <button onclick="downloadSinglePhoto('${photo.photoId.id}')" class="button ${
