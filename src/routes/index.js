@@ -179,7 +179,7 @@ router.get("/", async (req, res, next) => {
           <td>${photo.viewCount || 0}</td>
           <td>${
             downloadedFiles.has(`${photo.photoId.id}.jpg`)
-              ? '<span class="status downloaded">Downloaded</span>'
+              ? '<span class="status downloaded"><span class="status-text">Downloaded</span><span class="status-icon">✅</span></span>'
               : '<span class="status not-downloaded">Not Downloaded</span>'
           }</td>
           <td>

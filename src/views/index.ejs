@@ -113,6 +113,17 @@
         font-weight: 500;
         white-space: nowrap;
       }
+      .status-icon {
+        display: none;
+      }
+      @media (max-width: 768px) {
+        .status-text {
+          display: none;
+        }
+        .status-icon {
+          display: inline;
+        }
+      }
       .status.downloaded {
         background-color: #34a853;
       }
