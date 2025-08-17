@@ -124,9 +124,50 @@ async function listFiles(drive, folderId) {
   return allFiles;
 }
 
+async function findFile(drive, fileName, folderId) {
+  const res = await drive.files.list({
+    q: `name='${fileName}' and '${folderId}' in parents and trashed=false`,
+    fields: "files(id, name)",
+    spaces: "drive",
+  });
+  return res.data.files.length > 0 ? res.data.files[0] : null;
+}
+
 async function deleteFile(drive, fileId) {
   await drive.files.delete({
     fileId: fileId,
+  });
+}
+
+async function updateFile(
+  drive,
+  fileId,
+  mimeType,
+  contentStream,
+  size,
+  onUploadProgress
+) {
+  const passThrough = new PassThrough();
+  let bytesUploaded = 0;
+
+  passThrough.on("data", (chunk) => {
+    bytesUploaded += chunk.length;
+    if (size) {
+      const percentage = Math.round((bytesUploaded / size) * 100);
+      onUploadProgress(percentage);
+    }
+  });
+
+  contentStream.pipe(passThrough);
+
+  const media = {
+    mimeType,
+    body: passThrough,
+  };
+  await drive.files.update({
+    fileId: fileId,
+    media: media,
+    fields: "id",
   });
 }
 
@@ -139,6 +180,8 @@ module.exports = {
   createFile,
   listFiles,
   deleteFile,
+  findFile,
+  updateFile,
   FOLDER_NAME,
   PHOTO_LIST_FILE_NAME,
 };

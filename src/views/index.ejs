@@ -393,6 +393,7 @@
             <th style="width: 10%">Latitude</th>
             <th style="width: 10%">Longitude</th>
             <th style="width: 11%">Status</th>
+            <th style="width: 10%">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -494,6 +495,14 @@
 
       function cancelDownload() {
         fetch('/cancel-download', { method: 'POST' });
+      }
+
+      function downloadSinglePhoto(photoId) {
+        document.getElementById('download-progress').style.display = 'block';
+        document.querySelector('.progress-bar-container').style.display = 'block';
+        document.getElementById('progress-text').style.display = 'block';
+        connectWebSocket();
+        fetch('/download-single/' + photoId, { method: 'GET' });
       }
 
       <% if (isLoggedIn) { %>
