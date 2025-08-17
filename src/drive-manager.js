@@ -139,6 +139,38 @@ async function deleteFile(drive, fileId) {
   });
 }
 
+async function updateFile(
+  drive,
+  fileId,
+  mimeType,
+  contentStream,
+  size,
+  onUploadProgress
+) {
+  const passThrough = new PassThrough();
+  let bytesUploaded = 0;
+
+  passThrough.on("data", (chunk) => {
+    bytesUploaded += chunk.length;
+    if (size) {
+      const percentage = Math.round((bytesUploaded / size) * 100);
+      onUploadProgress(percentage);
+    }
+  });
+
+  contentStream.pipe(passThrough);
+
+  const media = {
+    mimeType,
+    body: passThrough,
+  };
+  await drive.files.update({
+    fileId: fileId,
+    media: media,
+    fields: "id",
+  });
+}
+
 module.exports = {
   getDriveClient,
   findOrCreateFolder,
@@ -149,6 +181,7 @@ module.exports = {
   listFiles,
   deleteFile,
   findFile,
+  updateFile,
   FOLDER_NAME,
   PHOTO_LIST_FILE_NAME,
 };

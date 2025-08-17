@@ -5,6 +5,8 @@ const {
   getDriveClient,
   findOrCreateFolder,
   createFile,
+  updateFile,
+  findFile,
   listFiles,
   FOLDER_NAME,
 } = require("../drive-manager");
@@ -105,17 +107,32 @@ async function downloadSinglePhoto(req, photo) {
 
     const stream = Readable.from(newJpeg);
 
-    await createFile(
-      drive,
-      fileName,
-      "image/jpeg",
-      stream,
-      folderId,
-      newJpeg.length,
-      (percentage) => {
-        progressCallback({ uploadProgress: percentage });
-      }
-    );
+    const existingFile = await findFile(drive, fileName, folderId);
+
+    if (existingFile) {
+      await updateFile(
+        drive,
+        existingFile.id,
+        "image/jpeg",
+        stream,
+        newJpeg.length,
+        (percentage) => {
+          progressCallback({ uploadProgress: percentage });
+        }
+      );
+    } else {
+      await createFile(
+        drive,
+        fileName,
+        "image/jpeg",
+        stream,
+        folderId,
+        newJpeg.length,
+        (percentage) => {
+          progressCallback({ uploadProgress: percentage });
+        }
+      );
+    }
 
     // Move the downloaded photo from missingPhotos to downloadedPhotos
     if (req.session.missingPhotos && req.session.downloadedPhotos) {
