@@ -183,7 +183,9 @@ router.get("/", async (req, res, next) => {
               : '<span class="status not-downloaded">Not Downloaded</span>'
           }</td>
           <td>
-            <button onclick="downloadSinglePhoto('${photo.photoId.id}')" class="button" style="font-size: 12px; padding: 5px 10px;">
+            <button onclick="downloadSinglePhoto('${photo.photoId.id}')" class="button ${
+              downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'redownload-btn' : 'download-btn'
+            }" style="font-size: 12px; padding: 5px 10px;">
               ${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'Re-download' : 'Download'}
             </button>
           </td>
