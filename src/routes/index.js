@@ -186,7 +186,8 @@ router.get("/", async (req, res, next) => {
             <button onclick="downloadSinglePhoto('${photo.photoId.id}')" class="button ${
               downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'redownload-btn' : 'download-btn'
             }" style="font-size: 12px; padding: 5px 10px;">
-              ${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'Re-download' : 'Download'}
+              <span class="button-text">${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'Re-download' : 'Download'}</span>
+              <span class="button-icon">${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? '&#10227;' : '&#11123;'}</span>
             </button>
           </td>
         </tr>
