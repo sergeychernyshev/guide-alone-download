@@ -36,6 +36,7 @@
         margin-right: 10px;
         line-height: 1.5;
         box-sizing: border-box;
+        white-space: nowrap;
       }
       a {
         color: #4285f4;
@@ -61,6 +62,12 @@
       }
       a.cancel {
         background: #6c757d;
+      }
+      .download-btn {
+        background-color: #34a853;
+      }
+      .redownload-btn {
+        background-color: #c0c0c0;
       }
       #cancel-btn {
         background: #db4437;
@@ -104,6 +111,21 @@
         font-size: 12px;
         color: white;
         font-weight: 500;
+        white-space: nowrap;
+      }
+      .status-icon {
+        display: none;
+      }
+      .button-icon {
+        display: none;
+      }
+      @media (max-width: 768px) {
+        .status-text, .button-text {
+          display: none;
+        }
+        .status-icon, .button-icon {
+          display: inline;
+        }
       }
       .status.downloaded {
         background-color: #34a853;
@@ -382,18 +404,16 @@
       <table>
         <thead>
           <tr>
-            <th style="width: 25%">Photo ID</th>
-            <th style="width: 20%">Place Name</th>
-            <th style="width: 12%">
+            <th>Photo ID</th>
+            <th>Location</th>
+            <th>
               <%- buildSortLink("date", "Capture Time") %>
             </th>
-            <th style="width: 12%">
+            <th>
               <%- buildSortLink("views", "View Count") %>
             </th>
-            <th style="width: 10%">Latitude</th>
-            <th style="width: 10%">Longitude</th>
-            <th style="width: 11%">Status</th>
-            <th style="width: 10%">Actions</th>
+            <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
