@@ -179,15 +179,15 @@ router.get("/", async (req, res, next) => {
           <td>${photo.viewCount || 0}</td>
           <td>${
             downloadedFiles.has(`${photo.photoId.id}.jpg`)
-              ? '<span class="status downloaded"><span class="status-text">Downloaded</span><span class="status-icon">&#10004;</span></span>'
-              : '<span class="status not-downloaded"><span class="status-text">Not Downloaded</span><span class="status-icon">&#10006;</span></span>'
+              ? '<span class="status downloaded" title="Downloaded"><span class="status-text">Downloaded</span><span class="status-icon">&#10004;</span></span>'
+              : '<span class="status not-downloaded" title="Not Downloaded"><span class="status-text">Not Downloaded</span><span class="status-icon">&#10006;</span></span>'
           }</td>
           <td>
             <button onclick="downloadSinglePhoto('${photo.photoId.id}')" class="button ${
               downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'redownload-btn' : 'download-btn'
-            }" style="font-size: 12px; padding: 5px 10px;">
+            }" style="font-size: 12px; padding: 5px 10px;" title="${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'Re-download' : 'Download'}">
               <span class="button-text">${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'Re-download' : 'Download'}</span>
-              <span class="button-icon">${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? '&#10227;' : '&#11123;'}</span>
+              <span class="button-icon">${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? '&#10227;' : '&#11015;'}</span>
             </button>
           </td>
         </tr>
