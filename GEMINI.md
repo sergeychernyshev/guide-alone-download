@@ -7,3 +7,4 @@
 - When I say "let's merge", squish-merge the current PR into main branch on GitHub. Then locally switch to main branch and pull the latest version. Restart the server after that.
 - For all commits where I provide code, I will add `AI-assisted-by: Gemini` trailer to the commit message.
 - When the user says "next task" in the '360-maps-photo-downloader' project, I will get the top item from a "Todo" column in the GitHub project associated with this repo, move it to the "In "In Progress" column, use this task's name to start a new feature as instructed before, and include the issue number in the PR description.
+- When the user says "new task" followed by a title, I will create a new issue in the '360-maps-photo-downloader' GitHub project with that title.
