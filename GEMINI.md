@@ -10,3 +10,4 @@
 - When the user says "new task" followed by a title, I will create a new issue in the '360-maps-photo-downloader' GitHub project with that title (capitalized), add it to the "Todo" column of the project, and set its status to "Todo".
 - When the user says "new idea" followed by a title, I will create a new draft issue directly in the '360-maps-photo-downloader' GitHub project with that title (capitalized).
 - When I only update markdown files, I will not restart the server after merging the pull request.
+- The GitHub project ID for the '360-maps-photo-downloader' repository is 3.
