@@ -9,3 +9,4 @@
 - When the user says "next task" in the '360-maps-photo-downloader' project, I will get the top item from a "Todo" column in the GitHub project associated with this repo, move it to the "In "In Progress" column, use this task's name to start a new feature as instructed before, and include the issue number in the PR description.
 - When the user says "new task" followed by a title, I will create a new issue in the '360-maps-photo-downloader' GitHub project with that title (capitalized), add it to the "Todo" column of the project, and set its status to "Todo".
 - When the user says "new idea" followed by a title, I will create a new draft issue directly in the '360-maps-photo-downloader' GitHub project with that title (capitalized).
+- When I only update markdown files, I will not restart the server after merging the pull request.
