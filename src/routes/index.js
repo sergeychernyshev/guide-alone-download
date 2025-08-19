@@ -135,13 +135,50 @@ router.get("/", async (req, res, next) => {
       if (page > 1) {
         paginationHtml += `<a href="${buildPageLink(page - 1)}">Previous</a>`;
       }
-      for (let i = 1; i <= totalPages; i++) {
+
+      const maxPagesToShow = 10;
+      let startPage, endPage;
+
+      if (totalPages <= maxPagesToShow) {
+        startPage = 1;
+        endPage = totalPages;
+      } else {
+        const maxPagesBeforeCurrent = Math.floor(maxPagesToShow / 2);
+        const maxPagesAfterCurrent = Math.ceil(maxPagesToShow / 2) - 1;
+        if (page <= maxPagesBeforeCurrent) {
+          startPage = 1;
+          endPage = maxPagesToShow;
+        } else if (page + maxPagesAfterCurrent >= totalPages) {
+          startPage = totalPages - maxPagesToShow + 1;
+          endPage = totalPages;
+        } else {
+          startPage = page - maxPagesBeforeCurrent;
+          endPage = page + maxPagesAfterCurrent;
+        }
+      }
+
+      if (startPage > 1) {
+        paginationHtml += `<a href="${buildPageLink(1)}">1</a>`;
+        if (startPage > 2) {
+          paginationHtml += `<span>...</span>`;
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
         if (i === page) {
           paginationHtml += `<span>${i}</span>`;
         } else {
           paginationHtml += `<a href="${buildPageLink(i)}">${i}</a>`;
         }
       }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          paginationHtml += `<span>...</span>`;
+        }
+        paginationHtml += `<a href="${buildPageLink(totalPages)}">${totalPages}</a>`;
+      }
+
       if (page < totalPages) {
         paginationHtml += `<a href="${buildPageLink(page + 1)}">Next</a>`;
       }
