@@ -239,46 +239,6 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.get("/update", async (req, res, next) => {
-  if (!isLoggedIn(req)) {
-    return res.redirect("/login");
-  }
-  try {
-    const oAuth2Client = await getAuthenticatedClient(req);
-    const drive = await getDriveClient(oAuth2Client);
-    const folder = await findOrCreateFolder(drive, FOLDER_NAME);
-    const folderId = folder.id;
-    let photoListFile = await getPhotoListFile(drive, folderId);
-
-    const progressCallback = (progress) => {
-      if (req.progressSocket) {
-        req.progressSocket.send(JSON.stringify(progress));
-      }
-    };
-
-    const photos = await listAllPhotos(oAuth2Client, progressCallback);
-
-    if (photoListFile) {
-      await writeFileContent(drive, photoListFile.id, photos);
-    } else {
-      await drive.files.create({
-        resource: {
-          name: PHOTO_LIST_FILE_NAME,
-          parents: [folderId],
-        },
-        media: {
-          mimeType: "application/json",
-          body: JSON.stringify(photos, null, 2),
-        },
-        fields: "id",
-      });
-    }
-    res.redirect("/");
-  } catch (error) {
-    next(error);
-  }
-});
-
 router.get("/login", async (req, res, next) => {
   try {
     const oAuth2Client = await getOAuthClient();
