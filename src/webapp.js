@@ -43,6 +43,18 @@ wss.on("connection", (ws, req) => {
   });
 });
 
+const MemoryStore = require("memorystore")(session);
+const store = new MemoryStore({
+  checkPeriod: 86400000, // prune expired entries every 24h
+});
+
+const sessionParser = session({
+  store: store,
+  secret: crypto.randomBytes(32).toString("hex"),
+  resave: false,
+  saveUninitialized: false,
+});
+
 // Set up EJS
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -55,18 +67,6 @@ async function initialize() {
   } catch (error) {
     console.log("config.json not found, using default settings.");
   }
-
-  const MemoryStore = require("memorystore")(session);
-  const store = new MemoryStore({
-    checkPeriod: 86400000, // prune expired entries every 24h
-  });
-
-  const sessionParser = session({
-    store: store,
-    secret: crypto.randomBytes(32).toString("hex"),
-    resave: false,
-    saveUninitialized: false,
-  });
 
   app.use(sessionParser);
 
