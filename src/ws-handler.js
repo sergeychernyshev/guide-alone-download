@@ -1,28 +1,44 @@
-const { download } = require("./download");
-const { cancelDownload } = require("./download-state");
-const { deleteDuplicates } = require("./drive-manager");
-const { downloadSinglePhoto } = require("./photo-manager");
+const { downloadAllPhotos } = require("./actions/download-all-photos");
+const { downloadSinglePhoto } = require("./actions/download-single-photo");
+const { cancelDownload } = require("./actions/cancel-download");
+const { deleteDuplicates } = require("./actions/delete-duplicates");
+const { updatePhotoList } = require("./actions/update-photo-list");
 
-async function handleMessage(ws, message) {
+/**
+ * Handles incoming WebSocket messages.
+ * @param {object} req - The Express request object, containing the session.
+ * @param {object} ws - The WebSocket object.
+ * @param {string} message - The incoming message.
+ */
+async function handleMessage(req, ws, message) {
   const data = JSON.parse(message);
   const { type, payload } = data;
 
   switch (type) {
     case "download":
-      await download(payload.photos, payload.drive, payload.folderId);
+      await downloadAllPhotos(
+        req,
+        req.session.photos,
+        req.session.downloadedPhotos.length,
+        req.session.missingPhotos.length
+      );
       break;
     case "cancel-download":
       cancelDownload();
       break;
     case "delete-duplicates":
-      await deleteDuplicates(payload.drive, payload.folderId);
+      await deleteDuplicates(req, payload.fileIds);
       break;
     case "download-photo":
+      const allPhotos = req.session.downloadedPhotos.concat(req.session.missingPhotos);
+      const photo = allPhotos.find(p => p.photoId.id === payload.photoId);
       await downloadSinglePhoto(
-        payload.photoId,
-        payload.drive,
-        payload.folderId
+        req,
+        photo,
       );
+      break;
+    case "update-photo-list":
+      await updatePhotoList(req);
       break;
     default:
       console.log(`Unknown message type: ${type}`);

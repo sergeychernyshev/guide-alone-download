@@ -7,13 +7,6 @@ const http = require("http");
 const WebSocket = require("ws");
 
 const indexRouter = require("./routes/index");
-const downloadRouter = require("./routes/download");
-const cancelRouter = require("./routes/cancel");
-const deleteDuplicatesRouter = require("./routes/delete-duplicates");
-const downloadPhotoRouter = require("./routes/download-photo");
-const downloadSingleRouter = require("./routes/download-single");
-
-const indexRouter = require("./routes/index");
 
 const { isTokenValid } = require("./oauth");
 const { handleMessage } = require("./ws-handler");
@@ -28,13 +21,21 @@ const CONFIG_PATH = path.join(process.cwd(), "config.json");
 // --- WEB APP SETUP ---
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ noServer: true });
 
-wss.on("connection", (ws) => {
+server.on('upgrade', function upgrade(request, socket, head) {
+  sessionParser(request, {}, () => {
+    wss.handleUpgrade(request, socket, head, function done(ws) {
+      wss.emit('connection', ws, request);
+    });
+  });
+});
+
+wss.on("connection", (ws, req) => {
   console.log("Client connected for progress updates");
   setSocket(ws);
   ws.on("message", (message) => {
-    handleMessage(ws, message);
+    handleMessage(req, ws, message);
   });
   ws.on("close", () => {
     console.log("Client disconnected");
@@ -60,14 +61,14 @@ async function initialize() {
     checkPeriod: 86400000, // prune expired entries every 24h
   });
 
-  app.use(
-    session({
-      store: store,
-      secret: crypto.randomBytes(32).toString("hex"),
-      resave: false,
-      saveUninitialized: false,
-    })
-  );
+  const sessionParser = session({
+    store: store,
+    secret: crypto.randomBytes(32).toString("hex"),
+    resave: false,
+    saveUninitialized: false,
+  });
+
+  app.use(sessionParser);
 
   if (config.save_token) {
     try {
