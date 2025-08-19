@@ -13,7 +13,10 @@ const deleteDuplicatesRouter = require("./routes/delete-duplicates");
 const downloadPhotoRouter = require("./routes/download-photo");
 const downloadSingleRouter = require("./routes/download-single");
 
+const indexRouter = require("./routes/index");
+
 const { isTokenValid } = require("./oauth");
+const { handleMessage } = require("./ws-handler");
 const { setSocket } = require("./download-state");
 
 // --- CONFIGURATION ---
@@ -30,6 +33,9 @@ const wss = new WebSocket.Server({ server });
 wss.on("connection", (ws) => {
   console.log("Client connected for progress updates");
   setSocket(ws);
+  ws.on("message", (message) => {
+    handleMessage(ws, message);
+  });
   ws.on("close", () => {
     console.log("Client disconnected");
     setSocket(null);
@@ -116,11 +122,6 @@ async function initialize() {
 
   // --- WEB INTERFACE & ROUTES ---
   app.use("/", indexRouter);
-  app.use("/download", downloadRouter);
-  app.use("/cancel-download", cancelRouter);
-  app.use("/delete-duplicates", deleteDuplicatesRouter);
-  app.use("/download-photo", downloadPhotoRouter);
-  app.use("/download-single", downloadSingleRouter);
 
   /**
    * Global error handler for the Express app.

@@ -430,26 +430,22 @@
     </div>
 
     <script>
-      window.addEventListener('DOMContentLoaded', (event) => {
-        const downloadState = <%- JSON.stringify(downloadState) %>;
-        if (downloadState.inProgress) {
-          document.getElementById('download-progress').style.display = 'block';
-          document.querySelector('.progress-bar-container').style.display = 'block';
-          document.getElementById('progress-text').style.display = 'block';
-          connectWebSocket();
-        }
-      });
+      let ws;
 
       function connectWebSocket() {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          return;
+        }
+
         const downloadBar = document.getElementById("download-bar");
         const uploadBar = document.getElementById("upload-bar");
         const totalProgressBar = document.getElementById("total-progress-bar");
         const progressText = document.getElementById("progress-text");
 
-        const ws = new WebSocket(`ws://${window.location.host}`);
+        ws = new WebSocket(`ws://${window.location.host}`);
 
         ws.onopen = () => {
-          console.log("WebSocket connection established for download progress.");
+          console.log("WebSocket connection established.");
         };
 
         ws.onmessage = (event) => {
@@ -513,8 +509,20 @@
         };
       }
 
+      window.addEventListener('DOMContentLoaded', (event) => {
+        const downloadState = <%- JSON.stringify(downloadState) %>;
+        if (downloadState.inProgress) {
+          document.getElementById('download-progress').style.display = 'block';
+          document.querySelector('.progress-bar-container').style.display = 'block';
+          document.getElementById('progress-text').style.display = 'block';
+          connectWebSocket();
+        }
+      });
+
       function cancelDownload() {
-        fetch('/cancel-download', { method: 'POST' });
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'cancel-download' }));
+        }
       }
 
       function downloadSinglePhoto(photoId) {
@@ -522,7 +530,13 @@
         document.querySelector('.progress-bar-container').style.display = 'block';
         document.getElementById('progress-text').style.display = 'block';
         connectWebSocket();
-        fetch('/download-single/' + photoId, { method: 'GET' });
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'download-photo', payload: { photoId } }));
+        } else {
+          ws.onopen = () => {
+            ws.send(JSON.stringify({ type: 'download-photo', payload: { photoId } }));
+          };
+        }
       }
 
       <% if (isLoggedIn) { %>
@@ -533,7 +547,17 @@
             return;
           }
         }
-        window.location.href = '/download';
+        document.getElementById('download-progress').style.display = 'block';
+        document.querySelector('.progress-bar-container').style.display = 'block';
+        document.getElementById('progress-text').style.display = 'block';
+        connectWebSocket();
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'download' }));
+        } else {
+          ws.onopen = () => {
+            ws.send(JSON.stringify({ type: 'download' }));
+          };
+        }
       }
 
       function updatePhotoList() {
@@ -541,37 +565,18 @@
           updateBtn.disabled = true;
           updateBtn.innerHTML = '<div class="spinner"></div><span>Starting...</span>';
 
-          const ws = new WebSocket(`ws://${window.location.host}`);
+          connectWebSocket();
 
-          ws.onopen = () => {
-              console.log('WebSocket connection established');
-              window.location.href = '/update';
-          };
-
-          ws.onmessage = (event) => {
-              const data = JSON.parse(event.data);
-              const messageSpan = updateBtn.querySelector('span');
-              if (messageSpan) {
-                  messageSpan.textContent = data.message;
-              }
-              if (data.complete) {
-                  ws.close();
-                  // The page will reload, so no need to re-enable the button here.
-              }
-          };
-
-          ws.onclose = () => {
-              console.log('WebSocket connection closed');
-          };
-
-          ws.onerror = (error) => {
-              console.error('WebSocket error:', error);
-              updateBtn.innerHTML = 'Error!';
-          };
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'update-photo-list' }));
+          } else {
+            ws.onopen = () => {
+              ws.send(JSON.stringify({ type: 'update-photo-list' }));
+            };
+          }
       }
       <% } %>
-    </script>
-    <script>
+
       document
         .getElementById("toggle-drive-only-list")
         ?.addEventListener("click", function () {
@@ -605,19 +610,14 @@
         }
 
         if (fileIdsToDelete.length > 0 && confirm(`Are you sure you want to delete ${fileIdsToDelete.length} duplicate files?`)) {
-          fetch('/delete-duplicates', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ fileIds: fileIdsToDelete }),
-          }).then(response => {
-            if (response.ok) {
-              window.location.reload();
-            } else {
-              alert('Error deleting files.');
-            }
-          });
+          connectWebSocket();
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'delete-duplicates', payload: { fileIds: fileIdsToDelete } }));
+          } else {
+            ws.onopen = () => {
+              ws.send(JSON.stringify({ type: 'delete-duplicates', payload: { fileIds: fileIdsToDelete } }));
+            };
+          }
         }
       });
     </script>
