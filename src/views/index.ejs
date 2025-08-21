@@ -361,12 +361,12 @@
       <% } %>
 
       <form
-        action="/"
-        method="get"
+        action="javascript:searchPhotos()"
         style="margin-top: 1em; display: flex; align-items: center"
       >
         <input
           type="text"
+          id="search-input"
           name="search"
           placeholder="Search by place name..."
           value="<%= locals.search || '' %>"
@@ -382,8 +382,8 @@
         <span>Filter by status:</span>
         <a
           href="/?status=all&search=<%= locals.search || '' %>"
-          class="<%= status === 'all' ? 'active' : '' %>"
-          >All</a
+          class="<%= status === 'all' ? 'active' : '' %> has-count"
+          >All (<span id="all-count"><%= totalPhotosCount %></span>)</a
         >
         <a
           href="/?status=downloaded&search=<%= locals.search || '' %>"
@@ -432,6 +432,18 @@
     <script>
       let ws;
 
+      function searchPhotos() {
+        const search = document.getElementById('search-input').value;
+        connectWebSocket();
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'search-photos', payload: { search } }));
+        } else {
+          ws.onopen = () => {
+            ws.send(JSON.stringify({ type: 'search-photos', payload: { search } }));
+          };
+        }
+      }
+
       function changePage(page) {
         connectWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -461,6 +473,16 @@
 
         ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
+
+          if (data.type === 'search-results') {
+            const { photoListHtml, paginationHtml, downloadedCount, notDownloadedCount, totalPhotosCount } = data.payload;
+            document.querySelector('tbody').innerHTML = photoListHtml;
+            document.querySelector('.pagination').innerHTML = paginationHtml;
+            document.getElementById('downloaded-count').textContent = downloadedCount;
+            document.getElementById('not-downloaded-count').textContent = notDownloadedCount;
+            document.getElementById('all-count').textContent = totalPhotosCount;
+            return;
+          }
 
           if (data.type === 'page-changed') {
             const { photoListHtml, paginationHtml } = data.payload;

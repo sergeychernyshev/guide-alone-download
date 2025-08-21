@@ -1,8 +1,9 @@
 const { getAuthenticatedClient } = require("../oauth");
 const { getDriveClient, listFiles, findOrCreateFolder, FOLDER_NAME } = require("../drive-manager");
 
-async function changePage(req, ws, page) {
-  const { allPhotos, search } = req.session;
+async function searchPhotos(req, ws, search) {
+  req.session.search = search;
+  const { allPhotos } = req.session;
 
   const filteredPhotos = allPhotos.filter(photo => {
     if (!search) {
@@ -14,10 +15,10 @@ async function changePage(req, ws, page) {
     return false;
   });
 
-  const photos = filteredPhotos;
+  const page = 1;
   const pageSize = 50;
-  const totalPages = Math.ceil(photos.length / pageSize);
-  const paginatedPhotos = photos.slice(
+  const totalPages = Math.ceil(filteredPhotos.length / pageSize);
+  const paginatedPhotos = filteredPhotos.slice(
     (page - 1) * pageSize,
     page * pageSize
   );
@@ -27,6 +28,17 @@ async function changePage(req, ws, page) {
   const folder = await findOrCreateFolder(drive, FOLDER_NAME);
   const driveFiles = await listFiles(drive, folder.id);
   const downloadedFiles = new Set(driveFiles.map((f) => f.name));
+
+  const downloadedPhotos = filteredPhotos.filter((p) =>
+    downloadedFiles.has(`${p.photoId.id}.jpg`)
+  );
+  const missingPhotos = filteredPhotos.filter(
+    (p) => !downloadedFiles.has(`${p.photoId.id}.jpg`)
+  );
+
+  const downloadedCount = downloadedPhotos.length;
+  const notDownloadedCount = missingPhotos.length;
+  const totalPhotosCount = filteredPhotos.length;
 
   const photoListHtml = paginatedPhotos
     .map(
@@ -120,13 +132,16 @@ async function changePage(req, ws, page) {
 
   ws.send(
     JSON.stringify({
-      type: "page-changed",
+      type: "search-results",
       payload: {
         photoListHtml,
         paginationHtml,
+        downloadedCount,
+        notDownloadedCount,
+        totalPhotosCount,
       },
     })
   );
 }
 
-module.exports = { changePage };
+module.exports = { searchPhotos };

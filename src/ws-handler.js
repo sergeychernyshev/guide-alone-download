@@ -4,6 +4,7 @@ const { cancelDownload } = require("./actions/cancel-download");
 const { deleteDuplicates } = require("./actions/delete-duplicates");
 const { updatePhotoList } = require("./actions/update-photo-list");
 const { changePage } = require("./actions/change-page");
+const { searchPhotos } = require("./actions/search-photos");
 
 
 /**
@@ -44,6 +45,9 @@ async function handleMessage(req, ws, message) {
       break;
     case "change-page":
       await changePage(req, ws, payload.page);
+      break;
+    case "search-photos":
+      await searchPhotos(req, ws, payload.search);
       break;
     default:
       console.log(`Unknown message type: ${type}`);
