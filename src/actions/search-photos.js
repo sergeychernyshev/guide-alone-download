@@ -78,7 +78,7 @@ async function searchPhotos(req, ws, search) {
 
     paginationHtml += '<div class="pagination">';
     if (page > 1) {
-      paginationHtml += `<a ${buildPageClick(page - 1)}>Previous</a>`;
+      paginationHtml += `<button ${buildPageClick(page - 1)}>Previous</button>`;
     }
 
     const maxPagesToShow = 10;
@@ -103,7 +103,7 @@ async function searchPhotos(req, ws, search) {
     }
 
     if (startPage > 1) {
-      paginationHtml += `<a ${buildPageClick(1)}>1</a>`;
+      paginationHtml += `<button ${buildPageClick(1)}>1</button>`;
       if (startPage > 2) {
         paginationHtml += `<span>...</span>`;
       }
@@ -111,9 +111,9 @@ async function searchPhotos(req, ws, search) {
 
     for (let i = startPage; i <= endPage; i++) {
       if (i === page) {
-        paginationHtml += `<span>${i}</span>`;
+        paginationHtml += `<button disabled>${i}</button>`;
       } else {
-        paginationHtml += `<a ${buildPageClick(i)}>${i}</a>`;
+        paginationHtml += `<button ${buildPageClick(i)}>${i}</button>`;
       }
     }
 
@@ -121,11 +121,11 @@ async function searchPhotos(req, ws, search) {
       if (endPage < totalPages - 1) {
         paginationHtml += `<span>...</span>`;
       }
-      paginationHtml += `<a ${buildPageClick(totalPages)}>${totalPages}</a>`;
+      paginationHtml += `<button ${buildPageClick(totalPages)}>${totalPages}</button>`;
     }
 
     if (page < totalPages) {
-      paginationHtml += `<a ${buildPageClick(page + 1)}>Next</a>`;
+      paginationHtml += `<button ${buildPageClick(page + 1)}>Next</button>`;
     }
     paginationHtml += "</div>";
   }
