@@ -29,6 +29,16 @@ async function searchPhotos(req, ws, search) {
   const driveFiles = await listFiles(drive, folder.id);
   const downloadedFiles = new Set(driveFiles.map((f) => f.name));
 
+  const downloadedPhotos = filteredPhotos.filter((p) =>
+    downloadedFiles.has(`${p.photoId.id}.jpg`)
+  );
+  const missingPhotos = filteredPhotos.filter(
+    (p) => !downloadedFiles.has(`${p.photoId.id}.jpg`)
+  );
+
+  const downloadedCount = downloadedPhotos.length;
+  const notDownloadedCount = missingPhotos.length;
+
   const photoListHtml = paginatedPhotos
     .map(
       (photo) => `
@@ -125,6 +135,8 @@ async function searchPhotos(req, ws, search) {
       payload: {
         photoListHtml,
         paginationHtml,
+        downloadedCount,
+        notDownloadedCount,
       },
     })
   );

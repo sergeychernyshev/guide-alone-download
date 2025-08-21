@@ -475,9 +475,11 @@
           const data = JSON.parse(event.data);
 
           if (data.type === 'search-results') {
-            const { photoListHtml, paginationHtml } = data.payload;
+            const { photoListHtml, paginationHtml, downloadedCount, notDownloadedCount } = data.payload;
             document.querySelector('tbody').innerHTML = photoListHtml;
             document.querySelector('.pagination').innerHTML = paginationHtml;
+            document.getElementById('downloaded-count').textContent = downloadedCount;
+            document.getElementById('not-downloaded-count').textContent = notDownloadedCount;
             return;
           }
 
