@@ -191,9 +191,23 @@
         opacity: 0.7;
         cursor: not-allowed;
       }
-      form input[type="text"] {
+      .search-container {
+        position: relative;
         flex-grow: 1;
         margin-right: 10px;
+      }
+      #clear-search-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 5px;
+        line-height: 1;
+        font-size: 12px;
+        margin: 0;
+      }
+      form input[type="text"] {
+        width: 100%;
         padding: 9px 10px;
         font-size: 16px;
         line-height: 1.5;
@@ -380,15 +394,18 @@
         action="javascript:searchPhotos()"
         style="margin-top: 1em; display: flex; align-items: center"
       >
-        <input
-          type="text"
-          id="search-input"
-          name="search"
-          placeholder="Search by place name..."
-          value="<%= locals.search || '' %>"
-        />
+        <div class="search-container">
+          <input
+            type="text"
+            id="search-input"
+            name="search"
+            placeholder="Search by place name..."
+            value="<%= locals.search || '' %>"
+            onkeyup="toggleClearButton()"
+          />
+          <button type="button" onclick="clearSearch()" class="cancel button" id="clear-search-btn" style="display: none;">Clear</button>
+        </div>
         <button type="submit">Search</button>
-        <button type="button" onclick="clearSearch()" class="cancel button" style="margin-left: 10px">Clear</button>
       </form>
 
       <% if (isLoggedIn) { %>
@@ -467,6 +484,7 @@
 
       function clearSearch() {
         document.getElementById('search-input').value = '';
+        toggleClearButton();
         searchPhotos();
       }
 
@@ -594,7 +612,18 @@
         };
       }
 
+      function toggleClearButton() {
+        const searchInput = document.getElementById('search-input');
+        const clearButton = document.getElementById('clear-search-btn');
+        if (searchInput.value) {
+          clearButton.style.display = 'block';
+        } else {
+          clearButton.style.display = 'none';
+        }
+      }
+
       window.addEventListener('DOMContentLoaded', (event) => {
+        toggleClearButton();
         const downloadState = <%- JSON.stringify(downloadState) %>;
         if (downloadState.inProgress) {
           document.getElementById('download-progress').style.display = 'block';
