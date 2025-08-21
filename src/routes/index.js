@@ -75,9 +75,18 @@ router.get("/", async (req, res, next) => {
     const driveFiles = loggedIn ? await listFiles(drive, folderId) : [];
     const drivePhotoCount = driveFiles.filter(f => f.name !== PHOTO_LIST_FILE_NAME).length;
     const downloadedFiles = new Set(driveFiles.map((f) => f.name));
-    const totalPhotosCount = filteredPhotos.length;
 
-    const photoIdsFromStreetView = new Set(filteredPhotos.map(p => `${p.photoId.id}.jpg`));
+    const filteredByStatus = filteredPhotos.filter(photo => {
+      if (status === 'all') {
+        return true;
+      }
+      const isDownloaded = downloadedFiles.has(`${photo.photoId.id}.jpg`);
+      return status === 'downloaded' ? isDownloaded : !isDownloaded;
+    });
+
+    const totalPhotosCount = filteredByStatus.length;
+
+    const photoIdsFromStreetView = new Set(filteredByStatus.map(p => `${p.photoId.id}.jpg`));
     const driveOnlyFiles = driveFiles.filter(f => f.name !== PHOTO_LIST_FILE_NAME && !photoIdsFromStreetView.has(f.name));
     const driveOnlyCount = driveOnlyFiles.length;
 
@@ -95,10 +104,10 @@ router.get("/", async (req, res, next) => {
     }, {});
     const duplicateFilesCount = Object.keys(duplicateFiles).length;
 
-    const downloadedPhotos = filteredPhotos.filter((p) =>
+    const downloadedPhotos = filteredByStatus.filter((p) =>
       downloadedFiles.has(`${p.photoId.id}.jpg`)
     );
-    const missingPhotos = filteredPhotos.filter(
+    const missingPhotos = filteredByStatus.filter(
       (p) => !downloadedFiles.has(`${p.photoId.id}.jpg`)
     );
 
@@ -114,8 +123,8 @@ router.get("/", async (req, res, next) => {
 
     const page = parseInt(req.query.page, 10) || 1;
     const pageSize = 50;
-    const totalPages = Math.ceil(filteredPhotos.length / pageSize);
-    const paginatedPhotos = filteredPhotos.slice(
+    const totalPages = Math.ceil(filteredByStatus.length / pageSize);
+    const paginatedPhotos = filteredByStatus.slice(
       (page - 1) * pageSize,
       page * pageSize
     );

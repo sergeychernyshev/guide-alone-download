@@ -397,18 +397,21 @@
       <div class="status-filter">
         <span>Filter by status:</span>
         <a
-          href="/?status=all&search=<%= locals.search || '' %>"
+          id="filter-all"
+          href="javascript:filterPhotos('all')"
           class="<%= status === 'all' ? 'active' : '' %> has-count"
           >All (<span id="all-count"><%= totalPhotosCount %></span>)</a
         >
         <a
-          href="/?status=downloaded&search=<%= locals.search || '' %>"
+          id="filter-downloaded"
+          href="javascript:filterPhotos('downloaded')"
           class="<%= status === 'downloaded' ? 'active' : '' %> has-count"
           >Downloaded (<span id="downloaded-count"><%= downloadedCount %></span
           >)</a
         >
         <a
-          href="/?status=not-downloaded&search=<%= locals.search || '' %>"
+          id="filter-not-downloaded"
+          href="javascript:filterPhotos('not-downloaded')"
           class="<%= status === 'not-downloaded' ? 'active' : '' %> has-count"
           >Not Downloaded (<span id="not-downloaded-count"
             ><%= notDownloadedCount %></span
@@ -447,6 +450,22 @@
 
     <script>
       let ws;
+
+      function filterPhotos(status) {
+        document.getElementById('filter-all').classList.remove('active');
+        document.getElementById('filter-downloaded').classList.remove('active');
+        document.getElementById('filter-not-downloaded').classList.remove('active');
+        document.getElementById(`filter-${status}`).classList.add('active');
+
+        connectWebSocket();
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'filter-photos', payload: { status } }));
+        } else {
+          ws.onopen = () => {
+            ws.send(JSON.stringify({ type: 'filter-photos', payload: { status } }));
+          };
+        }
+      }
 
       function searchPhotos() {
         const search = document.getElementById('search-input').value;
@@ -489,6 +508,13 @@
 
         ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
+
+          if (data.type === 'filter-results') {
+            const { photoListHtml, paginationHtml } = data.payload;
+            document.querySelector('tbody').innerHTML = photoListHtml;
+            document.querySelector('.pagination').innerHTML = paginationHtml;
+            return;
+          }
 
           if (data.type === 'search-results') {
             const { photoListHtml, paginationHtml, downloadedCount, notDownloadedCount, totalPhotosCount } = data.payload;
