@@ -93,7 +93,7 @@ router.get("/", async (req, res, next) => {
     );
 
     if (loggedIn) {
-      req.session.photos = missingPhotos;
+      req.session.allPhotos = photos;
       req.session.downloadedPhotos = downloadedPhotos;
       req.session.missingPhotos = missingPhotos;
     }
@@ -125,15 +125,13 @@ router.get("/", async (req, res, next) => {
 
     let paginationHtml = "";
     if (totalPages > 1) {
-      const buildPageLink = (page) => {
-        return `/?page=${page}&sort=${
-          req.query.sort || "date"
-        }&order=${req.query.order || "desc"}&search=${search}&status=${status}`;
+      const buildPageClick = (page) => {
+        return `onclick="changePage(${page})"`;
       };
 
       paginationHtml += '<div class="pagination">';
       if (page > 1) {
-        paginationHtml += `<a href="${buildPageLink(page - 1)}">Previous</a>`;
+        paginationHtml += `<a ${buildPageClick(page - 1)}>Previous</a>`;
       }
 
       const maxPagesToShow = 10;
@@ -158,7 +156,7 @@ router.get("/", async (req, res, next) => {
       }
 
       if (startPage > 1) {
-        paginationHtml += `<a href="${buildPageLink(1)}">1</a>`;
+        paginationHtml += `<a ${buildPageClick(1)}>1</a>`;
         if (startPage > 2) {
           paginationHtml += `<span>...</span>`;
         }
@@ -168,7 +166,7 @@ router.get("/", async (req, res, next) => {
         if (i === page) {
           paginationHtml += `<span>${i}</span>`;
         } else {
-          paginationHtml += `<a href="${buildPageLink(i)}">${i}</a>`;
+          paginationHtml += `<a ${buildPageClick(i)}>${i}</a>`;
         }
       }
 
@@ -176,11 +174,11 @@ router.get("/", async (req, res, next) => {
         if (endPage < totalPages - 1) {
           paginationHtml += `<span>...</span>`;
         }
-        paginationHtml += `<a href="${buildPageLink(totalPages)}">${totalPages}</a>`;
+        paginationHtml += `<a ${buildPageClick(totalPages)}>${totalPages}</a>`;
       }
 
       if (page < totalPages) {
-        paginationHtml += `<a href="${buildPageLink(page + 1)}">Next</a>`;
+        paginationHtml += `<a ${buildPageClick(page + 1)}>Next</a>`;
       }
       paginationHtml += "</div>";
     }

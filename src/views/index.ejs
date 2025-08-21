@@ -432,6 +432,17 @@
     <script>
       let ws;
 
+      function changePage(page) {
+        connectWebSocket();
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
+        } else {
+          ws.onopen = () => {
+            ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
+          };
+        }
+      }
+
       function connectWebSocket() {
         if (ws && ws.readyState === WebSocket.OPEN) {
           return;
@@ -450,6 +461,13 @@
 
         ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
+
+          if (data.type === 'page-changed') {
+            const { photoListHtml, paginationHtml } = data.payload;
+            document.querySelector('tbody').innerHTML = photoListHtml;
+            document.querySelector('.pagination').innerHTML = paginationHtml;
+            return;
+          }
 
           if (data.error) {
             progressText.textContent = `Error: ${data.error}`;
