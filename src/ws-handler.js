@@ -43,7 +43,7 @@ async function handleMessage(req, ws, message) {
       await updatePhotoList(req);
       break;
     case "change-page":
-      await changePage(req, payload.page);
+      await changePage(req, ws, payload.page);
       break;
     default:
       console.log(`Unknown message type: ${type}`);

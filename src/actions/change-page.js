@@ -1,7 +1,7 @@
 const { getAuthenticatedClient } = require("../oauth");
 const { getDriveClient, listFiles, findOrCreateFolder, FOLDER_NAME } = require("../drive-manager");
 
-async function changePage(req, page) {
+async function changePage(req, ws, page) {
   const { photos, downloadedPhotos, missingPhotos } = req.session;
   const pageSize = 50;
   const totalPages = Math.ceil(photos.length / pageSize);
@@ -106,7 +106,7 @@ async function changePage(req, page) {
     paginationHtml += "</div>";
   }
 
-  req.ws.send(
+  ws.send(
     JSON.stringify({
       type: "page-changed",
       payload: {
