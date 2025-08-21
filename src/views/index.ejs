@@ -430,7 +430,10 @@
     </div>
 
     <script>
+      let ws;
+
       function changePage(page) {
+        connectWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
         } else {
@@ -439,7 +442,6 @@
           };
         }
       }
-      let ws;
 
       function connectWebSocket() {
         if (ws && ws.readyState === WebSocket.OPEN) {
