@@ -1,5 +1,6 @@
 const { getAuthenticatedClient } = require("../oauth");
 const { getDriveClient, listFiles, findOrCreateFolder, FOLDER_NAME } = require("../drive-manager");
+const { calculatePoseCounts } = require("../utils/photo-utils");
 
 async function searchPhotos(req, ws, search) {
   req.session.search = search;
@@ -39,6 +40,7 @@ async function searchPhotos(req, ws, search) {
   const downloadedCount = downloadedPhotos.length;
   const notDownloadedCount = missingPhotos.length;
   const totalPhotosCount = filteredPhotos.length;
+  const poseCounts = calculatePoseCounts(filteredPhotos);
 
   const photoListHtml = paginatedPhotos
     .map(
@@ -139,6 +141,7 @@ async function searchPhotos(req, ws, search) {
         downloadedCount,
         notDownloadedCount,
         totalPhotosCount,
+        poseCounts,
       },
     })
   );

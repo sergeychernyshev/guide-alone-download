@@ -435,11 +435,11 @@
       </div>
       <div class="pose-filter">
         <span>Filter by pose properties:</span>
-        <label><input type="checkbox" name="pose-filter" value="heading" onchange="filterByPose()"> Heading</label>
-        <label><input type="checkbox" name="pose-filter" value="pitch" onchange="filterByPose()"> Pitch</label>
-        <label><input type="checkbox" name="pose-filter" value="roll" onchange="filterByPose()"> Roll</label>
-        <label><input type="checkbox" name="pose-filter" value="altitude" onchange="filterByPose()"> Altitude</label>
-        <label><input type="checkbox" name="pose-filter" value="latLngPair" onchange="filterByPose()"> GPS Record</label>
+        <label><input type="checkbox" name="pose-filter" value="heading" onchange="filterByPose()"> Heading (<span id="pose-heading-count"><%= poseCounts.heading %></span>)</label>
+        <label><input type="checkbox" name="pose-filter" value="pitch" onchange="filterByPose()"> Pitch (<span id="pose-pitch-count"><%= poseCounts.pitch %></span>)</label>
+        <label><input type="checkbox" name="pose-filter" value="roll" onchange="filterByPose()"> Roll (<span id="pose-roll-count"><%= poseCounts.roll %></span>)</label>
+        <label><input type="checkbox" name="pose-filter" value="altitude" onchange="filterByPose()"> Altitude (<span id="pose-altitude-count"><%= poseCounts.altitude %></span>)</label>
+        <label><input type="checkbox" name="pose-filter" value="latLngPair" onchange="filterByPose()"> GPS Record (<span id="pose-latLngPair-count"><%= poseCounts.latLngPair %></span>)</label>
       </div>
       <% } %>
 
@@ -551,26 +551,29 @@
           const data = JSON.parse(event.data);
 
           if (data.type === 'filter-by-pose-results') {
-            const { photoListHtml, paginationHtml } = data.payload;
+            const { photoListHtml, paginationHtml, poseCounts } = data.payload;
             document.querySelector('tbody').innerHTML = photoListHtml;
             document.querySelector('.pagination').innerHTML = paginationHtml;
+            updatePoseCounts(poseCounts);
             return;
           }
 
           if (data.type === 'filter-results') {
-            const { photoListHtml, paginationHtml } = data.payload;
+            const { photoListHtml, paginationHtml, poseCounts } = data.payload;
             document.querySelector('tbody').innerHTML = photoListHtml;
             document.querySelector('.pagination').innerHTML = paginationHtml;
+            updatePoseCounts(poseCounts);
             return;
           }
 
           if (data.type === 'search-results') {
-            const { photoListHtml, paginationHtml, downloadedCount, notDownloadedCount, totalPhotosCount } = data.payload;
+            const { photoListHtml, paginationHtml, downloadedCount, notDownloadedCount, totalPhotosCount, poseCounts } = data.payload;
             document.querySelector('tbody').innerHTML = photoListHtml;
             document.querySelector('.pagination').innerHTML = paginationHtml;
             document.getElementById('downloaded-count').textContent = downloadedCount;
             document.getElementById('not-downloaded-count').textContent = notDownloadedCount;
             document.getElementById('all-count').textContent = totalPhotosCount;
+            updatePoseCounts(poseCounts);
             return;
           }
 
@@ -637,6 +640,14 @@
           progressText.textContent =
             "An error occurred. Check the console for details.";
         };
+      }
+
+      function updatePoseCounts(poseCounts) {
+        document.getElementById('pose-heading-count').textContent = poseCounts.heading;
+        document.getElementById('pose-pitch-count').textContent = poseCounts.pitch;
+        document.getElementById('pose-roll-count').textContent = poseCounts.roll;
+        document.getElementById('pose-altitude-count').textContent = poseCounts.altitude;
+        document.getElementById('pose-latLngPair-count').textContent = poseCounts.latLngPair;
       }
 
       function toggleClearButton() {

@@ -1,5 +1,6 @@
 const { getAuthenticatedClient } = require("../oauth");
 const { getDriveClient, listFiles, findOrCreateFolder, FOLDER_NAME } = require("../drive-manager");
+const { calculatePoseCounts } = require("../utils/photo-utils");
 
 async function filterByPose(req, ws, filters) {
   req.session.poseFilters = filters;
@@ -48,6 +49,8 @@ async function filterByPose(req, ws, filters) {
     (page - 1) * pageSize,
     page * pageSize
   );
+
+  const poseCounts = calculatePoseCounts(filteredByStatus);
 
   const photoListHtml = paginatedPhotos
     .map(
@@ -145,6 +148,7 @@ async function filterByPose(req, ws, filters) {
       payload: {
         photoListHtml,
         paginationHtml,
+        poseCounts,
       },
     })
   );

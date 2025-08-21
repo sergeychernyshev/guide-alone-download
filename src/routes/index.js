@@ -18,6 +18,7 @@ const {
   PHOTO_LIST_FILE_NAME,
 } = require("../drive-manager");
 const { getState } = require("../download-state");
+const { calculatePoseCounts } = require("../utils/photo-utils");
 
 const router = express.Router();
 
@@ -98,6 +99,8 @@ router.get("/", async (req, res, next) => {
         return photo.pose && typeof photo.pose[filter] === 'number'
       });
     });
+
+    const poseCounts = calculatePoseCounts(filteredByStatus);
 
     const photoIdsFromStreetView = new Set(filteredByPose.map(p => `${p.photoId.id}.jpg`));
     const driveOnlyFiles = driveFiles.filter(f => f.name !== PHOTO_LIST_FILE_NAME && !photoIdsFromStreetView.has(f.name));
@@ -268,6 +271,7 @@ router.get("/", async (req, res, next) => {
       paginationHtml,
       buildSortLink,
       totalPhotosCount,
+      poseCounts,
     });
   } catch (error) {
     next(error);
