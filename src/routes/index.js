@@ -103,9 +103,13 @@ router.get("/", async (req, res, next) => {
     );
 
     if (loggedIn) {
-      req.session.allPhotos = filteredPhotos;
-      req.session.downloadedPhotos = downloadedPhotos;
-      req.session.missingPhotos = missingPhotos;
+      req.session.allPhotos = photos;
+      req.session.search = search;
+      req.session.status = status;
+      const allDownloadedPhotos = photos.filter((p) => downloadedFiles.has(`${p.photoId.id}.jpg`));
+      const allMissingPhotos = photos.filter((p) => !downloadedFiles.has(`${p.photoId.id}.jpg`));
+      req.session.downloadedPhotos = allDownloadedPhotos;
+      req.session.missingPhotos = allMissingPhotos;
     }
 
     const page = parseInt(req.query.page, 10) || 1;

@@ -2,6 +2,7 @@ const { getAuthenticatedClient } = require("../oauth");
 const { getDriveClient, listFiles, findOrCreateFolder, FOLDER_NAME } = require("../drive-manager");
 
 async function searchPhotos(req, ws, search) {
+  req.session.search = search;
   const { allPhotos } = req.session;
 
   const filteredPhotos = allPhotos.filter(photo => {

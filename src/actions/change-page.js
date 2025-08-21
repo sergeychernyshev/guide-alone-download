@@ -2,8 +2,19 @@ const { getAuthenticatedClient } = require("../oauth");
 const { getDriveClient, listFiles, findOrCreateFolder, FOLDER_NAME } = require("../drive-manager");
 
 async function changePage(req, ws, page) {
-  const { allPhotos, downloadedPhotos, missingPhotos } = req.session;
-  const photos = allPhotos;
+  const { allPhotos, search } = req.session;
+
+  const filteredPhotos = allPhotos.filter(photo => {
+    if (!search) {
+      return true;
+    }
+    if (photo.places && photo.places.length > 0 && photo.places[0].name) {
+      return photo.places[0].name.toLowerCase().includes(search.toLowerCase());
+    }
+    return false;
+  });
+
+  const photos = filteredPhotos;
   const pageSize = 50;
   const totalPages = Math.ceil(photos.length / pageSize);
   const paginatedPhotos = photos.slice(
