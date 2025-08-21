@@ -6,6 +6,7 @@ const { updatePhotoList } = require("./actions/update-photo-list");
 const { changePage } = require("./actions/change-page");
 const { searchPhotos } = require("./actions/search-photos");
 const { filterPhotos } = require("./actions/filter-photos");
+const { filterByPose } = require("./actions/filter-by-pose");
 
 
 /**
@@ -52,6 +53,9 @@ async function handleMessage(req, ws, message) {
       break;
     case "filter-photos":
       await filterPhotos(req, ws, payload.status);
+      break;
+    case "filter-by-pose":
+      await filterByPose(req, ws, payload.filters);
       break;
     default:
       console.log(`Unknown message type: ${type}`);
