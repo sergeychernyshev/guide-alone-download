@@ -38,6 +38,7 @@ async function searchPhotos(req, ws, search) {
 
   const downloadedCount = downloadedPhotos.length;
   const notDownloadedCount = missingPhotos.length;
+  const totalPhotosCount = filteredPhotos.length;
 
   const photoListHtml = paginatedPhotos
     .map(
@@ -137,6 +138,7 @@ async function searchPhotos(req, ws, search) {
         paginationHtml,
         downloadedCount,
         notDownloadedCount,
+        totalPhotosCount,
       },
     })
   );

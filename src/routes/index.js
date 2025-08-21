@@ -200,14 +200,14 @@ router.get("/", async (req, res, next) => {
     res.render("index", {
       isLoggedIn: loggedIn,
       totalPhotos: totalPhotosCount,
-      displayedPhotos: photos.length,
+      displayedPhotos: filteredPhotos.length,
       missingPhotosCount: missingPhotos.length,
       search: search,
       status: status,
       folderLink: loggedIn ? folderLink : null,
       downloadState: getState(),
-      downloadedCount: loggedIn ? downloadedPhotos.length : 0,
-      notDownloadedCount: loggedIn ? missingPhotos.length : 0,
+      downloadedCount: downloadedPhotos.length,
+      notDownloadedCount: missingPhotos.length,
       driveOnlyCount: loggedIn ? driveOnlyCount : 0,
       driveOnlyFiles: loggedIn ? driveOnlyFiles : [],
       drivePhotoCount: loggedIn ? drivePhotoCount : 0,
@@ -245,6 +245,7 @@ router.get("/", async (req, res, next) => {
         .join(""),
       paginationHtml,
       buildSortLink,
+      totalPhotosCount,
     });
   } catch (error) {
     next(error);
