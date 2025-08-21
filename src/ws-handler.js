@@ -3,6 +3,8 @@ const { downloadSinglePhoto } = require("./actions/download-single-photo");
 const { cancelDownload } = require("./actions/cancel-download");
 const { deleteDuplicates } = require("./actions/delete-duplicates");
 const { updatePhotoList } = require("./actions/update-photo-list");
+const { changePage } = require("./actions/change-page");
+
 
 /**
  * Handles incoming WebSocket messages.
@@ -39,6 +41,9 @@ async function handleMessage(req, ws, message) {
       break;
     case "update-photo-list":
       await updatePhotoList(req);
+      break;
+    case "change-page":
+      await changePage(req, payload.page);
       break;
     default:
       console.log(`Unknown message type: ${type}`);

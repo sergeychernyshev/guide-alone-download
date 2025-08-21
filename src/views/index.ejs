@@ -430,6 +430,15 @@
     </div>
 
     <script>
+      function changePage(page) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
+        } else {
+          ws.onopen = () => {
+            ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
+          };
+        }
+      }
       let ws;
 
       function connectWebSocket() {
@@ -450,6 +459,13 @@
 
         ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
+
+          if (data.type === 'page-changed') {
+            const { photoListHtml, paginationHtml } = data.payload;
+            document.querySelector('tbody').innerHTML = photoListHtml;
+            document.querySelector('.pagination').innerHTML = paginationHtml;
+            return;
+          }
 
           if (data.error) {
             progressText.textContent = `Error: ${data.error}`;
