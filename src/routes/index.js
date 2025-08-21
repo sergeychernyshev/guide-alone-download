@@ -94,7 +94,6 @@ router.get("/", async (req, res, next) => {
 
     if (loggedIn) {
       req.session.allPhotos = photos;
-      req.session.photos = missingPhotos;
       req.session.downloadedPhotos = downloadedPhotos;
       req.session.missingPhotos = missingPhotos;
     }

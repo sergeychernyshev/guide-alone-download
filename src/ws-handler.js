@@ -20,7 +20,7 @@ async function handleMessage(req, ws, message) {
     case "download":
       await downloadAllPhotos(
         req,
-        req.session.photos,
+        req.session.missingPhotos,
         req.session.downloadedPhotos.length,
         req.session.missingPhotos.length
       );
