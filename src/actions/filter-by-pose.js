@@ -33,7 +33,7 @@ async function filterByPose(req, ws, filters) {
     if (!filters || filters.length === 0) {
       return true;
     }
-    return filters.every(filter => photo.pose && photo.pose[filter] !== undefined);
+    return filters.every(filter => photo.pose && typeof photo.pose[filter] === 'number');
   });
 
   const page = 1;
