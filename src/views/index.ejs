@@ -388,9 +388,7 @@
           value="<%= locals.search || '' %>"
         />
         <button type="submit">Search</button>
-        <% if (locals.search) { %>
-        <a href="/" class="cancel button" style="margin-left: 10px">Clear</a>
-        <% } %>
+        <button type="button" onclick="clearSearch()" class="cancel button" style="margin-left: 10px">Clear</button>
       </form>
 
       <% if (isLoggedIn) { %>
@@ -465,6 +463,11 @@
             ws.send(JSON.stringify({ type: 'filter-photos', payload: { status } }));
           };
         }
+      }
+
+      function clearSearch() {
+        document.getElementById('search-input').value = '';
+        searchPhotos();
       }
 
       function searchPhotos() {
