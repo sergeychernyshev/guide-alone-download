@@ -2,11 +2,11 @@ const { getAuthenticatedClient } = require("../oauth");
 const { getDriveClient, listFiles, findOrCreateFolder, FOLDER_NAME } = require("../drive-manager");
 const { calculatePoseCounts } = require("../utils/photo-utils");
 
-async function searchPhotos(req, ws, search) {
-  req.session.search = search;
-  const { allPhotos } = req.session;
+async function filterByPose(req, ws, filters) {
+  req.session.poseFilters = filters;
+  const { allPhotos, search, status } = req.session;
 
-  const filteredPhotos = allPhotos.filter(photo => {
+  const filteredBySearch = allPhotos.filter(photo => {
     if (!search) {
       return true;
     }
@@ -16,31 +16,41 @@ async function searchPhotos(req, ws, search) {
     return false;
   });
 
-  const page = 1;
-  const pageSize = 50;
-  const totalPages = Math.ceil(filteredPhotos.length / pageSize);
-  const paginatedPhotos = filteredPhotos.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  );
-
   const oAuth2Client = await getAuthenticatedClient(req);
   const drive = await getDriveClient(oAuth2Client);
   const folder = await findOrCreateFolder(drive, FOLDER_NAME);
   const driveFiles = await listFiles(drive, folder.id);
   const downloadedFiles = new Set(driveFiles.map((f) => f.name));
 
-  const downloadedPhotos = filteredPhotos.filter((p) =>
-    downloadedFiles.has(`${p.photoId.id}.jpg`)
-  );
-  const missingPhotos = filteredPhotos.filter(
-    (p) => !downloadedFiles.has(`${p.photoId.id}.jpg`)
+  const filteredByStatus = filteredBySearch.filter(photo => {
+    if (status === 'all') {
+      return true;
+    }
+    const isDownloaded = downloadedFiles.has(`${photo.photoId.id}.jpg`);
+    return status === 'downloaded' ? isDownloaded : !isDownloaded;
+  });
+
+  const filteredByPose = filteredByStatus.filter(photo => {
+    if (!filters || filters.length === 0) {
+      return true;
+    }
+    return filters.every(filter => {
+      if (filter === 'latLngPair') {
+        return photo.pose && photo.pose.latLngPair !== undefined;
+      }
+      return photo.pose && typeof photo.pose[filter] === 'number'
+    });
+  });
+
+  const page = 1;
+  const pageSize = 50;
+  const totalPages = Math.ceil(filteredByPose.length / pageSize);
+  const paginatedPhotos = filteredByPose.slice(
+    (page - 1) * pageSize,
+    page * pageSize
   );
 
-  const downloadedCount = downloadedPhotos.length;
-  const notDownloadedCount = missingPhotos.length;
-  const totalPhotosCount = filteredPhotos.length;
-  const poseCounts = calculatePoseCounts(filteredPhotos);
+  const poseCounts = calculatePoseCounts(filteredByStatus);
 
   const photoListHtml = paginatedPhotos
     .map(
@@ -134,17 +144,14 @@ async function searchPhotos(req, ws, search) {
 
   ws.send(
     JSON.stringify({
-      type: "search-results",
+      type: "filter-by-pose-results",
       payload: {
         photoListHtml,
         paginationHtml,
-        downloadedCount,
-        notDownloadedCount,
-        totalPhotosCount,
         poseCounts,
       },
     })
   );
 }
 
-module.exports = { searchPhotos };
+module.exports = { filterByPose };

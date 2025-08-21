@@ -18,6 +18,7 @@ const {
   PHOTO_LIST_FILE_NAME,
 } = require("../drive-manager");
 const { getState } = require("../download-state");
+const { calculatePoseCounts } = require("../utils/photo-utils");
 
 const router = express.Router();
 
@@ -86,7 +87,22 @@ router.get("/", async (req, res, next) => {
 
     const totalPhotosCount = filteredByStatus.length;
 
-    const photoIdsFromStreetView = new Set(filteredByStatus.map(p => `${p.photoId.id}.jpg`));
+    const poseFilters = req.query.poseFilters ? req.query.poseFilters.split(',') : [];
+    const filteredByPose = filteredByStatus.filter(photo => {
+      if (!poseFilters || poseFilters.length === 0) {
+        return true;
+      }
+      return poseFilters.every(filter => {
+        if (filter === 'latLngPair') {
+          return photo.pose && photo.pose.latLngPair !== undefined;
+        }
+        return photo.pose && typeof photo.pose[filter] === 'number'
+      });
+    });
+
+    const poseCounts = calculatePoseCounts(filteredByStatus);
+
+    const photoIdsFromStreetView = new Set(filteredByPose.map(p => `${p.photoId.id}.jpg`));
     const driveOnlyFiles = driveFiles.filter(f => f.name !== PHOTO_LIST_FILE_NAME && !photoIdsFromStreetView.has(f.name));
     const driveOnlyCount = driveOnlyFiles.length;
 
@@ -104,10 +120,10 @@ router.get("/", async (req, res, next) => {
     }, {});
     const duplicateFilesCount = Object.keys(duplicateFiles).length;
 
-    const downloadedPhotos = filteredByStatus.filter((p) =>
+    const downloadedPhotos = filteredByPose.filter((p) =>
       downloadedFiles.has(`${p.photoId.id}.jpg`)
     );
-    const missingPhotos = filteredByStatus.filter(
+    const missingPhotos = filteredByPose.filter(
       (p) => !downloadedFiles.has(`${p.photoId.id}.jpg`)
     );
 
@@ -123,8 +139,8 @@ router.get("/", async (req, res, next) => {
 
     const page = parseInt(req.query.page, 10) || 1;
     const pageSize = 50;
-    const totalPages = Math.ceil(filteredByStatus.length / pageSize);
-    const paginatedPhotos = filteredByStatus.slice(
+    const totalPages = Math.ceil(filteredByPose.length / pageSize);
+    const paginatedPhotos = filteredByPose.slice(
       (page - 1) * pageSize,
       page * pageSize
     );
@@ -255,6 +271,7 @@ router.get("/", async (req, res, next) => {
       paginationHtml,
       buildSortLink,
       totalPhotosCount,
+      poseCounts,
     });
   } catch (error) {
     next(error);
