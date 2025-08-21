@@ -361,12 +361,12 @@
       <% } %>
 
       <form
-        action="/"
-        method="get"
+        action="javascript:searchPhotos()"
         style="margin-top: 1em; display: flex; align-items: center"
       >
         <input
           type="text"
+          id="search-input"
           name="search"
           placeholder="Search by place name..."
           value="<%= locals.search || '' %>"
@@ -432,6 +432,19 @@
     <script>
       let ws;
 
+      <script>
+      function searchPhotos() {
+        const search = document.getElementById('search-input').value;
+        connectWebSocket();
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'search-photos', payload: { search } }));
+        } else {
+          ws.onopen = () => {
+            ws.send(JSON.stringify({ type: 'search-photos', payload: { search } }));
+          };
+        }
+      }
+
       function changePage(page) {
         connectWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -461,6 +474,13 @@
 
         ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
+
+          if (data.type === 'search-results') {
+            const { photoListHtml, paginationHtml } = data.payload;
+            document.querySelector('tbody').innerHTML = photoListHtml;
+            document.querySelector('.pagination').innerHTML = paginationHtml;
+            return;
+          }
 
           if (data.type === 'page-changed') {
             const { photoListHtml, paginationHtml } = data.payload;

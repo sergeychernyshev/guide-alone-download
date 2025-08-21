@@ -62,12 +62,22 @@ router.get("/", async (req, res, next) => {
     const search = req.query.search || "";
     const status = req.query.status || "all";
 
+    const filteredPhotos = photos.filter(photo => {
+      if (!search) {
+        return true;
+      }
+      if (photo.places && photo.places.length > 0 && photo.places[0].name) {
+        return photo.places[0].name.toLowerCase().includes(search.toLowerCase());
+      }
+      return false;
+    });
+
     const driveFiles = loggedIn ? await listFiles(drive, folderId) : [];
     const drivePhotoCount = driveFiles.filter(f => f.name !== PHOTO_LIST_FILE_NAME).length;
     const downloadedFiles = new Set(driveFiles.map((f) => f.name));
-    const totalPhotosCount = photos.length;
+    const totalPhotosCount = filteredPhotos.length;
 
-    const photoIdsFromStreetView = new Set(photos.map(p => `${p.photoId.id}.jpg`));
+    const photoIdsFromStreetView = new Set(filteredPhotos.map(p => `${p.photoId.id}.jpg`));
     const driveOnlyFiles = driveFiles.filter(f => f.name !== PHOTO_LIST_FILE_NAME && !photoIdsFromStreetView.has(f.name));
     const driveOnlyCount = driveOnlyFiles.length;
 
@@ -85,23 +95,23 @@ router.get("/", async (req, res, next) => {
     }, {});
     const duplicateFilesCount = Object.keys(duplicateFiles).length;
 
-    const downloadedPhotos = photos.filter((p) =>
+    const downloadedPhotos = filteredPhotos.filter((p) =>
       downloadedFiles.has(`${p.photoId.id}.jpg`)
     );
-    const missingPhotos = photos.filter(
+    const missingPhotos = filteredPhotos.filter(
       (p) => !downloadedFiles.has(`${p.photoId.id}.jpg`)
     );
 
     if (loggedIn) {
-      req.session.allPhotos = photos;
+      req.session.allPhotos = filteredPhotos;
       req.session.downloadedPhotos = downloadedPhotos;
       req.session.missingPhotos = missingPhotos;
     }
 
     const page = parseInt(req.query.page, 10) || 1;
     const pageSize = 50;
-    const totalPages = Math.ceil(photos.length / pageSize);
-    const paginatedPhotos = photos.slice(
+    const totalPages = Math.ceil(filteredPhotos.length / pageSize);
+    const paginatedPhotos = filteredPhotos.slice(
       (page - 1) * pageSize,
       page * pageSize
     );
