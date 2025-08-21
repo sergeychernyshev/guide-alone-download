@@ -2,7 +2,8 @@ const { getAuthenticatedClient } = require("../oauth");
 const { getDriveClient, listFiles, findOrCreateFolder, FOLDER_NAME } = require("../drive-manager");
 
 async function changePage(req, ws, page) {
-  const { photos, downloadedPhotos, missingPhotos } = req.session;
+  const { allPhotos, downloadedPhotos, missingPhotos } = req.session;
+  const photos = allPhotos;
   const pageSize = 50;
   const totalPages = Math.ceil(photos.length / pageSize);
   const paginatedPhotos = photos.slice(
