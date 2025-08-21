@@ -397,17 +397,20 @@
       <div class="status-filter">
         <span>Filter by status:</span>
         <a
+          id="filter-all"
           href="javascript:filterPhotos('all')"
           class="<%= status === 'all' ? 'active' : '' %> has-count"
           >All (<span id="all-count"><%= totalPhotosCount %></span>)</a
         >
         <a
+          id="filter-downloaded"
           href="javascript:filterPhotos('downloaded')"
           class="<%= status === 'downloaded' ? 'active' : '' %> has-count"
           >Downloaded (<span id="downloaded-count"><%= downloadedCount %></span
           >)</a
         >
         <a
+          id="filter-not-downloaded"
           href="javascript:filterPhotos('not-downloaded')"
           class="<%= status === 'not-downloaded' ? 'active' : '' %> has-count"
           >Not Downloaded (<span id="not-downloaded-count"
@@ -449,6 +452,11 @@
       let ws;
 
       function filterPhotos(status) {
+        document.getElementById('filter-all').classList.remove('active');
+        document.getElementById('filter-downloaded').classList.remove('active');
+        document.getElementById('filter-not-downloaded').classList.remove('active');
+        document.getElementById(`filter-${status}`).classList.add('active');
+
         connectWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'filter-photos', payload: { status } }));
