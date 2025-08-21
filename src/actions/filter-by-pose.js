@@ -35,10 +35,13 @@ async function filterByPose(req, ws, filters) {
       return true;
     }
     return filters.every(filter => {
-      if (filter === 'latLngPair') {
-        return photo.pose && photo.pose.latLngPair !== undefined;
+      if (filter.value === 'any') {
+        return true;
       }
-      return photo.pose && typeof photo.pose[filter] === 'number'
+      const exists = filter.property === 'latLngPair'
+        ? photo.pose && photo.pose.latLngPair !== undefined
+        : photo.pose && typeof photo.pose[filter.property] === 'number';
+      return filter.value === 'exists' ? exists : !exists;
     });
   });
 

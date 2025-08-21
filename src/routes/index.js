@@ -87,16 +87,19 @@ router.get("/", async (req, res, next) => {
 
     const totalPhotosCount = filteredByStatus.length;
 
-    const poseFilters = req.query.poseFilters ? req.query.poseFilters.split(',') : [];
+    const poseFilters = req.query.poseFilters ? JSON.parse(req.query.poseFilters) : [];
     const filteredByPose = filteredByStatus.filter(photo => {
       if (!poseFilters || poseFilters.length === 0) {
         return true;
       }
       return poseFilters.every(filter => {
-        if (filter === 'latLngPair') {
-          return photo.pose && photo.pose.latLngPair !== undefined;
+        if (filter.value === 'any') {
+          return true;
         }
-        return photo.pose && typeof photo.pose[filter] === 'number'
+        const exists = filter.property === 'latLngPair'
+          ? photo.pose && photo.pose.latLngPair !== undefined
+          : photo.pose && typeof photo.pose[filter.property] === 'number';
+        return filter.value === 'exists' ? exists : !exists;
       });
     });
 

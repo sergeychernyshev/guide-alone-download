@@ -435,11 +435,31 @@
       </div>
       <div class="pose-filter">
         <span>Filter by pose properties:</span>
-        <label><input type="checkbox" name="pose-filter" value="heading" onchange="filterByPose()"> Heading (<span id="pose-heading-count"><%= poseCounts.heading %></span>)</label>
-        <label><input type="checkbox" name="pose-filter" value="pitch" onchange="filterByPose()"> Pitch (<span id="pose-pitch-count"><%= poseCounts.pitch %></span>)</label>
-        <label><input type="checkbox" name="pose-filter" value="roll" onchange="filterByPose()"> Roll (<span id="pose-roll-count"><%= poseCounts.roll %></span>)</label>
-        <label><input type="checkbox" name="pose-filter" value="altitude" onchange="filterByPose()"> Altitude (<span id="pose-altitude-count"><%= poseCounts.altitude %></span>)</label>
-        <label><input type="checkbox" name="pose-filter" value="latLngPair" onchange="filterByPose()"> GPS Record (<span id="pose-latLngPair-count"><%= poseCounts.latLngPair %></span>)</label>
+        <label>Heading: <select name="pose-filter" data-property="heading" onchange="filterByPose()">
+          <option value="any">Any</option>
+          <option value="exists">Exists</option>
+          <option value="missing">Doesn't Exist</option>
+        </select></label>
+        <label>Pitch: <select name="pose-filter" data-property="pitch" onchange="filterByPose()">
+          <option value="any">Any</option>
+          <option value="exists">Exists</option>
+          <option value="missing">Doesn't Exist</option>
+        </select></label>
+        <label>Roll: <select name="pose-filter" data-property="roll" onchange="filterByPose()">
+          <option value="any">Any</option>
+          <option value="exists">Exists</option>
+          <option value="missing">Doesn't Exist</option>
+        </select></label>
+        <label>Altitude: <select name="pose-filter" data-property="altitude" onchange="filterByPose()">
+          <option value="any">Any</option>
+          <option value="exists">Exists</option>
+          <option value="missing">Doesn't Exist</option>
+        </select></label>
+        <label>GPS Record: <select name="pose-filter" data-property="latLngPair" onchange="filterByPose()">
+          <option value="any">Any</option>
+          <option value="exists">Exists</option>
+          <option value="missing">Doesn't Exist</option>
+        </select></label>
       </div>
       <% } %>
 
@@ -475,7 +495,10 @@
       let ws;
 
       function filterByPose() {
-        const selectedFilters = Array.from(document.querySelectorAll('input[name="pose-filter"]:checked')).map(cb => cb.value);
+        const selectedFilters = Array.from(document.querySelectorAll('select[name="pose-filter"]')).map(select => ({
+          property: select.dataset.property,
+          value: select.value,
+        }));
         connectWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'filter-by-pose', payload: { filters: selectedFilters } }));
@@ -643,11 +666,16 @@
       }
 
       function updatePoseCounts(poseCounts) {
-        document.getElementById('pose-heading-count').textContent = poseCounts.heading;
-        document.getElementById('pose-pitch-count').textContent = poseCounts.pitch;
-        document.getElementById('pose-roll-count').textContent = poseCounts.roll;
-        document.getElementById('pose-altitude-count').textContent = poseCounts.altitude;
-        document.getElementById('pose-latLngPair-count').textContent = poseCounts.latLngPair;
+        document.querySelector('select[data-property="heading"] option[value="exists"]').textContent = `Exists (${poseCounts.heading.exists})`;
+        document.querySelector('select[data-property="heading"] option[value="missing"]').textContent = `Doesn't Exist (${poseCounts.heading.missing})`;
+        document.querySelector('select[data-property="pitch"] option[value="exists"]').textContent = `Exists (${poseCounts.pitch.exists})`;
+        document.querySelector('select[data-property="pitch"] option[value="missing"]').textContent = `Doesn't Exist (${poseCounts.pitch.missing})`;
+        document.querySelector('select[data-property="roll"] option[value="exists"]').textContent = `Exists (${poseCounts.roll.exists})`;
+        document.querySelector('select[data-property="roll"] option[value="missing"]').textContent = `Doesn't Exist (${poseCounts.roll.missing})`;
+        document.querySelector('select[data-property="altitude"] option[value="exists"]').textContent = `Exists (${poseCounts.altitude.exists})`;
+        document.querySelector('select[data-property="altitude"] option[value="missing"]').textContent = `Doesn't Exist (${poseCounts.altitude.missing})`;
+        document.querySelector('select[data-property="latLngPair"] option[value="exists"]').textContent = `Exists (${poseCounts.latLngPair.exists})`;
+        document.querySelector('select[data-property="latLngPair"] option[value="missing"]').textContent = `Doesn't Exist (${poseCounts.latLngPair.missing})`;
       }
 
       function toggleClearButton() {
