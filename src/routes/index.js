@@ -91,7 +91,12 @@ router.get("/", async (req, res, next) => {
       if (!poseFilters || poseFilters.length === 0) {
         return true;
       }
-      return poseFilters.every(filter => photo.pose && typeof photo.pose[filter] === 'number');
+      return poseFilters.every(filter => {
+        if (filter === 'latLngPair') {
+          return photo.pose && photo.pose.latLngPair !== undefined;
+        }
+        return photo.pose && typeof photo.pose[filter] === 'number'
+      });
     });
 
     const photoIdsFromStreetView = new Set(filteredByPose.map(p => `${p.photoId.id}.jpg`));

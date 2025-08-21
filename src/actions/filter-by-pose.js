@@ -33,7 +33,12 @@ async function filterByPose(req, ws, filters) {
     if (!filters || filters.length === 0) {
       return true;
     }
-    return filters.every(filter => photo.pose && typeof photo.pose[filter] === 'number');
+    return filters.every(filter => {
+      if (filter === 'latLngPair') {
+        return photo.pose && photo.pose.latLngPair !== undefined;
+      }
+      return photo.pose && typeof photo.pose[filter] === 'number'
+    });
   });
 
   const page = 1;
