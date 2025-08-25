@@ -1,23 +1,70 @@
 function calculatePoseCounts(photos) {
     const poseCounts = {
-        heading: 0,
-        pitch: 0,
-        roll: 0,
-        altitude: 0,
-        latLngPair: 0,
+        heading: { exists: 0, missing: 0 },
+        pitch: { exists: 0, missing: 0 },
+        roll: { exists: 0, missing: 0 },
+        altitude: { exists: 0, missing: 0 },
+        latLngPair: { exists: 0, missing: 0 },
     };
 
     photos.forEach(photo => {
         if (photo.pose) {
-            if (typeof photo.pose.heading === 'number') poseCounts.heading++;
-            if (typeof photo.pose.pitch === 'number') poseCounts.pitch++;
-            if (typeof photo.pose.roll === 'number') poseCounts.roll++;
-            if (typeof photo.pose.altitude === 'number') poseCounts.altitude++;
-            if (photo.pose.latLngPair !== undefined) poseCounts.latLngPair++;
+            if (typeof photo.pose.heading === 'number') poseCounts.heading.exists++; else poseCounts.heading.missing++;
+            if (typeof photo.pose.pitch === 'number') poseCounts.pitch.exists++; else poseCounts.pitch.missing++;
+            if (typeof photo.pose.roll === 'number') poseCounts.roll.exists++; else poseCounts.roll.missing++;
+            if (typeof photo.pose.altitude === 'number') poseCounts.altitude.exists++; else poseCounts.altitude.missing++;
+            if (photo.pose.latLngPair !== undefined) poseCounts.latLngPair.exists++; else poseCounts.latLngPair.missing++;
+        } else {
+            poseCounts.heading.missing++;
+            poseCounts.pitch.missing++;
+            poseCounts.roll.missing++;
+            poseCounts.altitude.missing++;
+            poseCounts.latLngPair.missing++;
         }
     });
 
     return poseCounts;
 }
 
-module.exports = { calculatePoseCounts };
+function buildPhotoListHtml(photos, downloadedFiles) {
+  return photos
+    .map((photo) => {
+      const poseParts = [];
+      if (photo.pose) {
+        if (typeof photo.pose.heading === 'number') poseParts.push(`<span style="white-space: nowrap;" title="Heading: ${photo.pose.heading.toFixed(2)}°"><strong>H</strong> ${photo.pose.heading.toFixed(2)}</span>`);
+        if (typeof photo.pose.pitch === 'number') poseParts.push(`<span style="white-space: nowrap;" title="Pitch: ${photo.pose.pitch.toFixed(2)}°"><strong>P</strong> ${photo.pose.pitch.toFixed(2)}</span>`);
+        if (typeof photo.pose.roll === 'number') poseParts.push(`<span style="white-space: nowrap;" title="Roll: ${photo.pose.roll.toFixed(2)}°"><strong>R</strong> ${photo.pose.roll.toFixed(2)}</span>`);
+        if (typeof photo.pose.altitude === 'number') poseParts.push(`<span style="white-space: nowrap;" title="Altitude: ${photo.pose.altitude.toFixed(2)}m"><strong>A</strong> ${photo.pose.altitude.toFixed(2)}</span>`);
+      }
+      const poseString = poseParts.length > 0 ? `<br><small>${poseParts.join(' ')}</small>` : '';
+
+      const locationName = photo.places && photo.places.length > 0 && photo.places[0].name;
+      const coordinates = `<small>${photo.pose.latLngPair.latitude.toFixed(4)}, ${photo.pose.latLngPair.longitude.toFixed(4)}</small>`;
+      const locationHtml = locationName ? `${locationName}<br>${coordinates}` : coordinates;
+
+      return `
+    <tr>
+      <td><a href="${photo.shareLink}" target="_blank">${photo.photoId.id}</a></td>
+      <td>${locationHtml}${poseString}</td>
+      <td>${new Date(photo.captureTime).toLocaleDateString()}</td>
+      <td>${photo.viewCount || 0}</td>
+      <td>${
+        downloadedFiles.has(`${photo.photoId.id}.jpg`)
+          ? '<span class="status downloaded" title="Downloaded"><span class="status-text">Downloaded</span><span class="status-icon">&#10004;</span></span>'
+          : '<span class="status not-downloaded" title="Not Downloaded"><span class="status-text">Not Downloaded</span><span class="status-icon">&#10006;</span></span>'
+      }</td>
+      <td>
+        <button onclick="downloadSinglePhoto('${photo.photoId.id}')" class="button ${
+          downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'redownload-btn' : 'download-btn'
+        }" style="font-size: 12px; padding: 5px 10px;" title="${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'Re-download' : 'Download'}">
+          <span class="button-text">${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'Re-download' : 'Download'}</span>
+          <span class="button-icon">${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? '&#10227;' : '&#11015;'}</span>
+        </button>
+      </td>
+    </tr>
+  `;
+    })
+    .join("");
+}
+
+module.exports = { calculatePoseCounts, buildPhotoListHtml };

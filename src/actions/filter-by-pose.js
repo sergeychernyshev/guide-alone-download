@@ -1,6 +1,6 @@
 const { getAuthenticatedClient } = require("../oauth");
 const { getDriveClient, listFiles, findOrCreateFolder, FOLDER_NAME } = require("../drive-manager");
-const { calculatePoseCounts } = require("../utils/photo-utils");
+const { calculatePoseCounts, buildPhotoListHtml } = require("../utils/photo-utils");
 
 async function filterByPose(req, ws, filters) {
   req.session.poseFilters = filters;
@@ -35,10 +35,13 @@ async function filterByPose(req, ws, filters) {
       return true;
     }
     return filters.every(filter => {
-      if (filter === 'latLngPair') {
-        return photo.pose && photo.pose.latLngPair !== undefined;
+      if (filter.value === 'any') {
+        return true;
       }
-      return photo.pose && typeof photo.pose[filter] === 'number'
+      const exists = filter.property === 'latLngPair'
+        ? photo.pose && photo.pose.latLngPair !== undefined
+        : photo.pose && typeof photo.pose[filter.property] === 'number';
+      return filter.value === 'exists' ? exists : !exists;
     });
   });
 
@@ -52,35 +55,7 @@ async function filterByPose(req, ws, filters) {
 
   const poseCounts = calculatePoseCounts(filteredByStatus);
 
-  const photoListHtml = paginatedPhotos
-    .map(
-      (photo) => `
-    <tr>
-      <td><a href="${photo.shareLink}" target="_blank">${photo.photoId.id}</a></td>
-      <td>${
-        photo.places && photo.places.length > 0 && photo.places[0].name
-          ? `${photo.places[0].name}<br><small>${photo.pose.latLngPair.latitude.toFixed(4)}, ${photo.pose.latLngPair.longitude.toFixed(4)}</small>`
-          : `${photo.pose.latLngPair.latitude.toFixed(4)}, ${photo.pose.latLngPair.longitude.toFixed(4)}`
-      }</td>
-      <td>${new Date(photo.captureTime).toLocaleDateString()}</td>
-      <td>${photo.viewCount || 0}</td>
-      <td>${
-        downloadedFiles.has(`${photo.photoId.id}.jpg`)
-          ? '<span class="status downloaded" title="Downloaded"><span class="status-text">Downloaded</span><span class="status-icon">&#10004;</span></span>'
-          : '<span class="status not-downloaded" title="Not Downloaded"><span class="status-text">Not Downloaded</span><span class="status-icon">&#10006;</span></span>'
-      }</td>
-      <td>
-        <button onclick="downloadSinglePhoto('${photo.photoId.id}')" class="button ${
-          downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'redownload-btn' : 'download-btn'
-        }" style="font-size: 12px; padding: 5px 10px;" title="${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'Re-download' : 'Download'}">
-          <span class="button-text">${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'Re-download' : 'Download'}</span>
-          <span class="button-icon">${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? '&#10227;' : '&#11015;'}</span>
-        </button>
-      </td>
-    </tr>
-  `
-    )
-    .join("");
+  const photoListHtml = buildPhotoListHtml(paginatedPhotos, downloadedFiles);
 
   let paginationHtml = "";
   if (totalPages > 1) {

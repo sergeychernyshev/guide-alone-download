@@ -120,10 +120,12 @@
         display: none;
       }
       @media (max-width: 768px) {
-        .status-text, .button-text {
+        .status-text,
+        .button-text {
           display: none;
         }
-        .status-icon, .button-icon {
+        .status-icon,
+        .button-icon {
           display: inline;
         }
       }
@@ -219,8 +221,6 @@
         margin-top: 1em;
         margin-bottom: 1em;
       }
-      .status-filter span {
-      }
       .status-filter a {
         margin-right: 10px;
         text-decoration: none;
@@ -278,6 +278,35 @@
         overflow: hidden;
         transition: max-height 0.2s ease-out;
       }
+      .pose-filter {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5em;
+        margin-bottom: 1em;
+      }
+      .pose-filter-group {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        border: 1px solid #eee;
+        padding: 0.5em;
+        border-radius: 5px;
+      }
+      .pose-filter-label {
+        font-weight: bold;
+      }
+      .pose-filter-value {
+        font-style: italic;
+      }
+      input[type="checkbox"][data-state="any"] {
+        accent-color: grey;
+      }
+      input[type="checkbox"][data-state="exists"] {
+        accent-color: green;
+      }
+      input[type="checkbox"][data-state="missing"] {
+        accent-color: red;
+      }
     </style>
   </head>
   <body>
@@ -327,27 +356,49 @@
           <% }); %>
         </ul>
       </div>
-      <% } %>
-      <% if (duplicateFilesCount > 0) { %>
-        <p>
-          There are <%= duplicateFilesCount %> files with duplicate names in your Google Drive folder.
-          <button id="toggle-duplicate-files-list" class="button" style="font-size: 12px; padding: 5px 10px; margin-left: 10px;">Show/Hide List</button>
-          <button id="delete-duplicate-files" class="button" style="font-size: 12px; padding: 5px 10px; margin-left: 10px; background-color: #db4437;">Delete Duplicates</button>
-        </p>
-        <div id="duplicate-files-list" class="panel">
-          <ul>
-            <% Object.keys(duplicateFiles).forEach(filename => { %>
+      <% } %> <% if (duplicateFilesCount > 0) { %>
+      <p>
+        There are <%= duplicateFilesCount %> files with duplicate names in your
+        Google Drive folder.
+        <button
+          id="toggle-duplicate-files-list"
+          class="button"
+          style="font-size: 12px; padding: 5px 10px; margin-left: 10px"
+        >
+          Show/Hide List
+        </button>
+        <button
+          id="delete-duplicate-files"
+          class="button"
+          style="
+            font-size: 12px;
+            padding: 5px 10px;
+            margin-left: 10px;
+            background-color: #db4437;
+          "
+        >
+          Delete Duplicates
+        </button>
+      </p>
+      <div id="duplicate-files-list" class="panel">
+        <ul>
+          <% Object.keys(duplicateFiles).forEach(filename => { %>
+          <li>
+            <strong><%= filename %></strong>
+            <ul>
+              <% duplicateFiles[filename].forEach(file => { %>
               <li>
-                <strong><%= filename %></strong>
-                <ul>
-                  <% duplicateFiles[filename].forEach(file => { %>
-                    <li><a href="<%= file.webViewLink %>" target="_blank"><%= file.name %></a> (ID: <%= file.id %>)</li>
-                  <% }); %>
-                </ul>
+                <a href="<%= file.webViewLink %>" target="_blank"
+                  ><%= file.name %></a
+                >
+                (ID: <%= file.id %>)
               </li>
-            <% }); %>
-          </ul>
-        </div>
+              <% }); %>
+            </ul>
+          </li>
+          <% }); %>
+        </ul>
+      </div>
       <% } %>
       <button onclick="confirmDownload()">Download All Missing Photos</button>
       <button id="update-btn" onclick="updatePhotoList()" class="update-btn">
@@ -403,7 +454,15 @@
             value="<%= locals.search || '' %>"
             onkeyup="toggleClearButton()"
           />
-          <button type="button" onclick="clearSearch()" class="cancel button" id="clear-search-btn" style="display: none;">Clear</button>
+          <button
+            type="button"
+            onclick="clearSearch()"
+            class="cancel button"
+            id="clear-search-btn"
+            style="display: none"
+          >
+            Clear
+          </button>
         </div>
         <button type="submit">Search</button>
       </form>
@@ -433,13 +492,83 @@
           >)</a
         >
       </div>
+      <span>Filter by pose properties:</span>
       <div class="pose-filter">
-        <span>Filter by pose properties:</span>
-        <label><input type="checkbox" name="pose-filter" value="heading" onchange="filterByPose()"> Heading (<span id="pose-heading-count"><%= poseCounts.heading %></span>)</label>
-        <label><input type="checkbox" name="pose-filter" value="pitch" onchange="filterByPose()"> Pitch (<span id="pose-pitch-count"><%= poseCounts.pitch %></span>)</label>
-        <label><input type="checkbox" name="pose-filter" value="roll" onchange="filterByPose()"> Roll (<span id="pose-roll-count"><%= poseCounts.roll %></span>)</label>
-        <label><input type="checkbox" name="pose-filter" value="altitude" onchange="filterByPose()"> Altitude (<span id="pose-altitude-count"><%= poseCounts.altitude %></span>)</label>
-        <label><input type="checkbox" name="pose-filter" value="latLngPair" onchange="filterByPose()"> GPS Record (<span id="pose-latLngPair-count"><%= poseCounts.latLngPair %></span>)</label>
+        <div class="pose-filter-group">
+          <div>
+            <strong class="pose-filter-label">Heading</strong>
+            <span class="pose-filter-count"></span>
+          </div>
+          <label
+            ><input
+              type="checkbox"
+              name="heading"
+              data-state="any"
+              onclick="cycleCheckboxState(this)"
+            />
+            <span class="pose-filter-value">Any</span></label
+          >
+        </div>
+        <div class="pose-filter-group">
+          <div>
+            <strong class="pose-filter-label">Pitch</strong>
+            <span class="pose-filter-count"></span>
+          </div>
+          <label
+            ><input
+              type="checkbox"
+              name="pitch"
+              data-state="any"
+              onclick="cycleCheckboxState(this)"
+            />
+            <span class="pose-filter-value">Any</span></label
+          >
+        </div>
+        <div class="pose-filter-group">
+          <div>
+            <strong class="pose-filter-label">Roll</strong>
+            <span class="pose-filter-count"></span>
+          </div>
+          <label
+            ><input
+              type="checkbox"
+              name="roll"
+              data-state="any"
+              onclick="cycleCheckboxState(this)"
+            />
+            <span class="pose-filter-value">Any</span></label
+          >
+        </div>
+        <div class="pose-filter-group">
+          <div>
+            <strong class="pose-filter-label">Altitude</strong>
+            <span class="pose-filter-count"></span>
+          </div>
+          <label
+            ><input
+              type="checkbox"
+              name="altitude"
+              data-state="any"
+              onclick="cycleCheckboxState(this)"
+            />
+            <span class="pose-filter-value">Any</span></label
+          >
+        </div>
+        <div class="pose-filter-group">
+          <div>
+            <strong class="pose-filter-label">GPS Record</strong>
+            <span class="pose-filter-count"></span>
+          </div>
+          <label
+            ><input
+              type="checkbox"
+              name="latLngPair"
+              data-state="any"
+              onclick="cycleCheckboxState(this)"
+            />
+            <span class="pose-filter-value">Any</span></label
+          >
+        </div>
       </div>
       <% } %>
 
@@ -448,12 +577,8 @@
           <tr>
             <th>Photo ID</th>
             <th>Location</th>
-            <th>
-              <%- buildSortLink("date", "Capture Time") %>
-            </th>
-            <th>
-              <%- buildSortLink("views", "View Count") %>
-            </th>
+            <th><%- buildSortLink("date", "Capture Time") %></th>
+            <th><%- buildSortLink("views", "View Count") %></th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -475,7 +600,9 @@
       let ws;
 
       function filterByPose() {
-        const selectedFilters = Array.from(document.querySelectorAll('input[name="pose-filter"]:checked')).map(cb => cb.value);
+        const selectedFilters = Array.from(document.querySelectorAll('.pose-filter-group input[type="checkbox"]')).map(checkbox => {
+          return { property: checkbox.name, value: checkbox.dataset.state };
+        });
         connectWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'filter-by-pose', payload: { filters: selectedFilters } }));
@@ -643,11 +770,12 @@
       }
 
       function updatePoseCounts(poseCounts) {
-        document.getElementById('pose-heading-count').textContent = poseCounts.heading;
-        document.getElementById('pose-pitch-count').textContent = poseCounts.pitch;
-        document.getElementById('pose-roll-count').textContent = poseCounts.roll;
-        document.getElementById('pose-altitude-count').textContent = poseCounts.altitude;
-        document.getElementById('pose-latLngPair-count').textContent = poseCounts.latLngPair;
+        for (const property in poseCounts) {
+          const checkbox = document.querySelector(`input[name="${property}"]`);
+          const group = checkbox.closest('.pose-filter-group');
+          const countSpan = group.querySelector('.pose-filter-count');
+          countSpan.textContent = `(${poseCounts[property].exists})`;
+        }
       }
 
       function toggleClearButton() {
@@ -660,7 +788,55 @@
         }
       }
 
+      function cycleCheckboxState(checkbox) {
+        const states = ['any', 'exists', 'missing'];
+        let currentState = checkbox.dataset.state;
+        let nextStateIndex = (states.indexOf(currentState) + 1) % states.length;
+        let nextState = states[nextStateIndex];
+        checkbox.dataset.state = nextState;
+
+        if (nextState === 'any') {
+          checkbox.checked = false;
+          checkbox.indeterminate = false;
+        } else if (nextState === 'exists') {
+          checkbox.checked = true;
+          checkbox.indeterminate = false;
+        } else if (nextState === 'missing') {
+          checkbox.checked = false;
+          checkbox.indeterminate = true;
+        }
+
+        const label = checkbox.closest('label');
+        const valueSpan = label.querySelector('.pose-filter-value');
+        if (nextState === 'any') {
+          valueSpan.textContent = 'Any';
+        } else if (nextState === 'exists') {
+          valueSpan.textContent = 'Exists';
+        } else {
+          valueSpan.textContent = "Doesn't Exist";
+        }
+
+        filterByPose();
+      }
+
       window.addEventListener('DOMContentLoaded', (event) => {
+        const initialPoseCounts = <%- JSON.stringify(poseCounts) %>;
+        updatePoseCounts(initialPoseCounts);
+
+        document.querySelectorAll('.pose-filter-group input[type="checkbox"]').forEach(checkbox => {
+          const currentState = checkbox.dataset.state;
+          if (currentState === 'any') {
+            checkbox.checked = false;
+            checkbox.indeterminate = false;
+          } else if (currentState === 'exists') {
+            checkbox.checked = true;
+            checkbox.indeterminate = false;
+          } else if (currentState === 'missing') {
+            checkbox.checked = false;
+            checkbox.indeterminate = true;
+          }
+        });
+
         toggleClearButton();
         const downloadState = <%- JSON.stringify(downloadState) %>;
         if (downloadState.inProgress) {
