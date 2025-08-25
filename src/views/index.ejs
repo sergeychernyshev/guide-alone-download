@@ -120,10 +120,12 @@
         display: none;
       }
       @media (max-width: 768px) {
-        .status-text, .button-text {
+        .status-text,
+        .button-text {
           display: none;
         }
-        .status-icon, .button-icon {
+        .status-icon,
+        .button-icon {
           display: inline;
         }
       }
@@ -219,8 +221,6 @@
         margin-top: 1em;
         margin-bottom: 1em;
       }
-      .status-filter span {
-      }
       .status-filter a {
         margin-right: 10px;
         text-decoration: none;
@@ -281,13 +281,16 @@
       .pose-filter {
         display: flex;
         flex-wrap: wrap;
-        gap: 1em;
+        gap: 0.5em;
         margin-bottom: 1em;
       }
       .pose-filter-group {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
+        border: 1px solid #eee;
+        padding: 0.5em;
+        border-radius: 5px;
       }
       .pose-filter-label {
         font-weight: bold;
@@ -353,27 +356,49 @@
           <% }); %>
         </ul>
       </div>
-      <% } %>
-      <% if (duplicateFilesCount > 0) { %>
-        <p>
-          There are <%= duplicateFilesCount %> files with duplicate names in your Google Drive folder.
-          <button id="toggle-duplicate-files-list" class="button" style="font-size: 12px; padding: 5px 10px; margin-left: 10px;">Show/Hide List</button>
-          <button id="delete-duplicate-files" class="button" style="font-size: 12px; padding: 5px 10px; margin-left: 10px; background-color: #db4437;">Delete Duplicates</button>
-        </p>
-        <div id="duplicate-files-list" class="panel">
-          <ul>
-            <% Object.keys(duplicateFiles).forEach(filename => { %>
+      <% } %> <% if (duplicateFilesCount > 0) { %>
+      <p>
+        There are <%= duplicateFilesCount %> files with duplicate names in your
+        Google Drive folder.
+        <button
+          id="toggle-duplicate-files-list"
+          class="button"
+          style="font-size: 12px; padding: 5px 10px; margin-left: 10px"
+        >
+          Show/Hide List
+        </button>
+        <button
+          id="delete-duplicate-files"
+          class="button"
+          style="
+            font-size: 12px;
+            padding: 5px 10px;
+            margin-left: 10px;
+            background-color: #db4437;
+          "
+        >
+          Delete Duplicates
+        </button>
+      </p>
+      <div id="duplicate-files-list" class="panel">
+        <ul>
+          <% Object.keys(duplicateFiles).forEach(filename => { %>
+          <li>
+            <strong><%= filename %></strong>
+            <ul>
+              <% duplicateFiles[filename].forEach(file => { %>
               <li>
-                <strong><%= filename %></strong>
-                <ul>
-                  <% duplicateFiles[filename].forEach(file => { %>
-                    <li><a href="<%= file.webViewLink %>" target="_blank"><%= file.name %></a> (ID: <%= file.id %>)</li>
-                  <% }); %>
-                </ul>
+                <a href="<%= file.webViewLink %>" target="_blank"
+                  ><%= file.name %></a
+                >
+                (ID: <%= file.id %>)
               </li>
-            <% }); %>
-          </ul>
-        </div>
+              <% }); %>
+            </ul>
+          </li>
+          <% }); %>
+        </ul>
+      </div>
       <% } %>
       <button onclick="confirmDownload()">Download All Missing Photos</button>
       <button id="update-btn" onclick="updatePhotoList()" class="update-btn">
@@ -429,7 +454,15 @@
             value="<%= locals.search || '' %>"
             onkeyup="toggleClearButton()"
           />
-          <button type="button" onclick="clearSearch()" class="cancel button" id="clear-search-btn" style="display: none;">Clear</button>
+          <button
+            type="button"
+            onclick="clearSearch()"
+            class="cancel button"
+            id="clear-search-btn"
+            style="display: none"
+          >
+            Clear
+          </button>
         </div>
         <button type="submit">Search</button>
       </form>
@@ -463,38 +496,78 @@
       <div class="pose-filter">
         <div class="pose-filter-group">
           <div>
-            <strong class="pose-filter-label">Heading:</strong>
+            <strong class="pose-filter-label">Heading</strong>
             <span class="pose-filter-count"></span>
           </div>
-          <label><input type="checkbox" name="heading" data-state="any" onclick="cycleCheckboxState(this)"> <span class="pose-filter-value">Any</span></label>
+          <label
+            ><input
+              type="checkbox"
+              name="heading"
+              data-state="any"
+              onclick="cycleCheckboxState(this)"
+            />
+            <span class="pose-filter-value">Any</span></label
+          >
         </div>
         <div class="pose-filter-group">
           <div>
-            <strong class="pose-filter-label">Pitch:</strong>
+            <strong class="pose-filter-label">Pitch</strong>
             <span class="pose-filter-count"></span>
           </div>
-          <label><input type="checkbox" name="pitch" data-state="any" onclick="cycleCheckboxState(this)"> <span class="pose-filter-value">Any</span></label>
+          <label
+            ><input
+              type="checkbox"
+              name="pitch"
+              data-state="any"
+              onclick="cycleCheckboxState(this)"
+            />
+            <span class="pose-filter-value">Any</span></label
+          >
         </div>
         <div class="pose-filter-group">
           <div>
-            <strong class="pose-filter-label">Roll:</strong>
+            <strong class="pose-filter-label">Roll</strong>
             <span class="pose-filter-count"></span>
           </div>
-          <label><input type="checkbox" name="roll" data-state="any" onclick="cycleCheckboxState(this)"> <span class="pose-filter-value">Any</span></label>
+          <label
+            ><input
+              type="checkbox"
+              name="roll"
+              data-state="any"
+              onclick="cycleCheckboxState(this)"
+            />
+            <span class="pose-filter-value">Any</span></label
+          >
         </div>
         <div class="pose-filter-group">
           <div>
-            <strong class="pose-filter-label">Altitude:</strong>
+            <strong class="pose-filter-label">Altitude</strong>
             <span class="pose-filter-count"></span>
           </div>
-          <label><input type="checkbox" name="altitude" data-state="any" onclick="cycleCheckboxState(this)"> <span class="pose-filter-value">Any</span></label>
+          <label
+            ><input
+              type="checkbox"
+              name="altitude"
+              data-state="any"
+              onclick="cycleCheckboxState(this)"
+            />
+            <span class="pose-filter-value">Any</span></label
+          >
         </div>
         <div class="pose-filter-group">
           <div>
-            <strong class="pose-filter-label">GPS Record:</strong>
+            <strong class="pose-filter-label">GPS Record</strong>
             <span class="pose-filter-count"></span>
           </div>
-          <label><input type="checkbox" name="latLngPair" data-state="any" onclick="cycleCheckboxState(this)"> <span class="pose-filter-value">Any</span></label>
+          <label
+            ><input
+              type="checkbox"
+              name="latLngPair"
+              data-state="any"
+              onclick="cycleCheckboxState(this)"
+            />
+            <span class="pose-filter-value">Any</span></label
+          >
         </div>
       </div>
       <% } %>
@@ -504,12 +577,8 @@
           <tr>
             <th>Photo ID</th>
             <th>Location</th>
-            <th>
-              <%- buildSortLink("date", "Capture Time") %>
-            </th>
-            <th>
-              <%- buildSortLink("views", "View Count") %>
-            </th>
+            <th><%- buildSortLink("date", "Capture Time") %></th>
+            <th><%- buildSortLink("views", "View Count") %></th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -736,7 +805,7 @@
           checkbox.checked = false;
           checkbox.indeterminate = true;
         }
-        
+
         const label = checkbox.closest('label');
         const valueSpan = label.querySelector('.pose-filter-value');
         if (nextState === 'any') {
