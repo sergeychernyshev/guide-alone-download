@@ -39,7 +39,9 @@ function buildPhotoListHtml(photos, downloadedFiles) {
       const poseString = poseParts.length > 0 ? `<br><small>${poseParts.join(' ')}</small>` : '';
 
       const locationName = photo.places && photo.places.length > 0 && photo.places[0].name;
-      const coordinates = `<small>${photo.pose.latLngPair.latitude.toFixed(4)}, ${photo.pose.latLngPair.longitude.toFixed(4)}</small>`;
+      const lat = photo.pose.latLngPair.latitude;
+      const lon = photo.pose.latLngPair.longitude;
+      const coordinates = `<small><span title="Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}">${lat.toFixed(4)}, ${lon.toFixed(4)}</span></small>`;
       const locationHtml = locationName ? `${locationName}<br>${coordinates}` : coordinates;
 
       return `
