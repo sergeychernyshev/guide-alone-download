@@ -243,15 +243,24 @@ router.get("/", async (req, res, next) => {
       duplicateFilesCount: loggedIn ? duplicateFilesCount : 0,
       folderName: folderName,
       photoListHtml: paginatedPhotos
-        .map(
-          (photo) => `
+        .map((photo) => {
+          const poseParts = [];
+          if (photo.pose) {
+            if (typeof photo.pose.heading === 'number') poseParts.push(`H: ${photo.pose.heading.toFixed(2)}`);
+            if (typeof photo.pose.pitch === 'number') poseParts.push(`P: ${photo.pose.pitch.toFixed(2)}`);
+            if (typeof photo.pose.roll === 'number') poseParts.push(`R: ${photo.pose.roll.toFixed(2)}`);
+            if (typeof photo.pose.altitude === 'number') poseParts.push(`A: ${photo.pose.altitude.toFixed(2)}`);
+          }
+          const poseString = poseParts.length > 0 ? `<br><small>${poseParts.join(' ')}</small>` : '';
+
+          const locationName = photo.places && photo.places.length > 0 && photo.places[0].name;
+          const coordinates = `<small>${photo.pose.latLngPair.latitude.toFixed(4)}, ${photo.pose.latLngPair.longitude.toFixed(4)}</small>`;
+          const locationHtml = locationName ? `${locationName}<br>${coordinates}` : coordinates;
+
+          return `
         <tr>
           <td><a href="${photo.shareLink}" target="_blank">${photo.photoId.id}</a></td>
-          <td>${
-            photo.places && photo.places.length > 0 && photo.places[0].name
-              ? `${photo.places[0].name}<br><small>${photo.pose.latLngPair.latitude.toFixed(4)}, ${photo.pose.latLngPair.longitude.toFixed(4)}</small>`
-              : `${photo.pose.latLngPair.latitude.toFixed(4)}, ${photo.pose.latLngPair.longitude.toFixed(4)}`
-          }</td>
+          <td>${locationHtml}${poseString}</td>
           <td>${new Date(photo.captureTime).toLocaleDateString()}</td>
           <td>${photo.viewCount || 0}</td>
           <td>${
@@ -268,8 +277,8 @@ router.get("/", async (req, res, next) => {
             </button>
           </td>
         </tr>
-      `
-        )
+      `;
+        })
         .join(""),
       paginationHtml,
       buildSortLink,

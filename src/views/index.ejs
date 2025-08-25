@@ -278,6 +278,32 @@
         overflow: hidden;
         transition: max-height 0.2s ease-out;
       }
+      .pose-filter {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1em;
+        margin-bottom: 1em;
+      }
+      .pose-filter-group {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .pose-filter-label {
+        font-weight: bold;
+      }
+      .pose-filter-value {
+        font-style: italic;
+      }
+      input[type="checkbox"][data-state="any"] {
+        accent-color: grey;
+      }
+      input[type="checkbox"][data-state="exists"] {
+        accent-color: green;
+      }
+      input[type="checkbox"][data-state="missing"] {
+        accent-color: red;
+      }
     </style>
   </head>
   <body>
@@ -433,33 +459,43 @@
           >)</a
         >
       </div>
+      <span>Filter by pose properties:</span>
       <div class="pose-filter">
-        <span>Filter by pose properties:</span>
-        <label>Heading: <select name="pose-filter" data-property="heading" onchange="filterByPose()">
-          <option value="any">Any</option>
-          <option value="exists">Exists</option>
-          <option value="missing">Doesn't Exist</option>
-        </select></label>
-        <label>Pitch: <select name="pose-filter" data-property="pitch" onchange="filterByPose()">
-          <option value="any">Any</option>
-          <option value="exists">Exists</option>
-          <option value="missing">Doesn't Exist</option>
-        </select></label>
-        <label>Roll: <select name="pose-filter" data-property="roll" onchange="filterByPose()">
-          <option value="any">Any</option>
-          <option value="exists">Exists</option>
-          <option value="missing">Doesn't Exist</option>
-        </select></label>
-        <label>Altitude: <select name="pose-filter" data-property="altitude" onchange="filterByPose()">
-          <option value="any">Any</option>
-          <option value="exists">Exists</option>
-          <option value="missing">Doesn't Exist</option>
-        </select></label>
-        <label>GPS Record: <select name="pose-filter" data-property="latLngPair" onchange="filterByPose()">
-          <option value="any">Any</option>
-          <option value="exists">Exists</option>
-          <option value="missing">Doesn't Exist</option>
-        </select></label>
+        <div class="pose-filter-group">
+          <div>
+            <strong class="pose-filter-label">Heading:</strong>
+            <span class="pose-filter-count"></span>
+          </div>
+          <label><input type="checkbox" name="heading" data-state="any" onclick="cycleCheckboxState(this)"> <span class="pose-filter-value">Any</span></label>
+        </div>
+        <div class="pose-filter-group">
+          <div>
+            <strong class="pose-filter-label">Pitch:</strong>
+            <span class="pose-filter-count"></span>
+          </div>
+          <label><input type="checkbox" name="pitch" data-state="any" onclick="cycleCheckboxState(this)"> <span class="pose-filter-value">Any</span></label>
+        </div>
+        <div class="pose-filter-group">
+          <div>
+            <strong class="pose-filter-label">Roll:</strong>
+            <span class="pose-filter-count"></span>
+          </div>
+          <label><input type="checkbox" name="roll" data-state="any" onclick="cycleCheckboxState(this)"> <span class="pose-filter-value">Any</span></label>
+        </div>
+        <div class="pose-filter-group">
+          <div>
+            <strong class="pose-filter-label">Altitude:</strong>
+            <span class="pose-filter-count"></span>
+          </div>
+          <label><input type="checkbox" name="altitude" data-state="any" onclick="cycleCheckboxState(this)"> <span class="pose-filter-value">Any</span></label>
+        </div>
+        <div class="pose-filter-group">
+          <div>
+            <strong class="pose-filter-label">GPS Record:</strong>
+            <span class="pose-filter-count"></span>
+          </div>
+          <label><input type="checkbox" name="latLngPair" data-state="any" onclick="cycleCheckboxState(this)"> <span class="pose-filter-value">Any</span></label>
+        </div>
       </div>
       <% } %>
 
@@ -495,10 +531,9 @@
       let ws;
 
       function filterByPose() {
-        const selectedFilters = Array.from(document.querySelectorAll('select[name="pose-filter"]')).map(select => ({
-          property: select.dataset.property,
-          value: select.value,
-        }));
+        const selectedFilters = Array.from(document.querySelectorAll('.pose-filter-group input[type="checkbox"]')).map(checkbox => {
+          return { property: checkbox.name, value: checkbox.dataset.state };
+        });
         connectWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'filter-by-pose', payload: { filters: selectedFilters } }));
@@ -666,16 +701,12 @@
       }
 
       function updatePoseCounts(poseCounts) {
-        document.querySelector('select[data-property="heading"] option[value="exists"]').textContent = `Exists (${poseCounts.heading.exists})`;
-        document.querySelector('select[data-property="heading"] option[value="missing"]').textContent = `Doesn't Exist (${poseCounts.heading.missing})`;
-        document.querySelector('select[data-property="pitch"] option[value="exists"]').textContent = `Exists (${poseCounts.pitch.exists})`;
-        document.querySelector('select[data-property="pitch"] option[value="missing"]').textContent = `Doesn't Exist (${poseCounts.pitch.missing})`;
-        document.querySelector('select[data-property="roll"] option[value="exists"]').textContent = `Exists (${poseCounts.roll.exists})`;
-        document.querySelector('select[data-property="roll"] option[value="missing"]').textContent = `Doesn't Exist (${poseCounts.roll.missing})`;
-        document.querySelector('select[data-property="altitude"] option[value="exists"]').textContent = `Exists (${poseCounts.altitude.exists})`;
-        document.querySelector('select[data-property="altitude"] option[value="missing"]').textContent = `Doesn't Exist (${poseCounts.altitude.missing})`;
-        document.querySelector('select[data-property="latLngPair"] option[value="exists"]').textContent = `Exists (${poseCounts.latLngPair.exists})`;
-        document.querySelector('select[data-property="latLngPair"] option[value="missing"]').textContent = `Doesn't Exist (${poseCounts.latLngPair.missing})`;
+        for (const property in poseCounts) {
+          const checkbox = document.querySelector(`input[name="${property}"]`);
+          const group = checkbox.closest('.pose-filter-group');
+          const countSpan = group.querySelector('.pose-filter-count');
+          countSpan.textContent = `(${poseCounts[property].exists})`;
+        }
       }
 
       function toggleClearButton() {
@@ -688,7 +719,55 @@
         }
       }
 
+      function cycleCheckboxState(checkbox) {
+        const states = ['any', 'exists', 'missing'];
+        let currentState = checkbox.dataset.state;
+        let nextStateIndex = (states.indexOf(currentState) + 1) % states.length;
+        let nextState = states[nextStateIndex];
+        checkbox.dataset.state = nextState;
+
+        if (nextState === 'any') {
+          checkbox.checked = false;
+          checkbox.indeterminate = false;
+        } else if (nextState === 'exists') {
+          checkbox.checked = true;
+          checkbox.indeterminate = false;
+        } else if (nextState === 'missing') {
+          checkbox.checked = false;
+          checkbox.indeterminate = true;
+        }
+        
+        const label = checkbox.closest('label');
+        const valueSpan = label.querySelector('.pose-filter-value');
+        if (nextState === 'any') {
+          valueSpan.textContent = 'Any';
+        } else if (nextState === 'exists') {
+          valueSpan.textContent = 'Exists';
+        } else {
+          valueSpan.textContent = "Doesn't Exist";
+        }
+
+        filterByPose();
+      }
+
       window.addEventListener('DOMContentLoaded', (event) => {
+        const initialPoseCounts = <%- JSON.stringify(poseCounts) %>;
+        updatePoseCounts(initialPoseCounts);
+
+        document.querySelectorAll('.pose-filter-group input[type="checkbox"]').forEach(checkbox => {
+          const currentState = checkbox.dataset.state;
+          if (currentState === 'any') {
+            checkbox.checked = false;
+            checkbox.indeterminate = false;
+          } else if (currentState === 'exists') {
+            checkbox.checked = true;
+            checkbox.indeterminate = false;
+          } else if (currentState === 'missing') {
+            checkbox.checked = false;
+            checkbox.indeterminate = true;
+          }
+        });
+
         toggleClearButton();
         const downloadState = <%- JSON.stringify(downloadState) %>;
         if (downloadState.inProgress) {
