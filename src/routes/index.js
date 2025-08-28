@@ -105,7 +105,31 @@ router.get("/", async (req, res, next) => {
       });
     });
 
-    const filteredPhotos = poseFilteredPhotos;
+    const sort = req.query.sort || "date";
+    const order = req.query.order || "desc";
+
+    const sortedPhotos = poseFilteredPhotos.sort((a, b) => {
+      let valA, valB;
+
+      if (sort === 'date') {
+        valA = new Date(a.captureTime);
+        valB = new Date(b.captureTime);
+      } else if (sort === 'views') {
+        valA = parseInt(a.viewCount, 10) || 0;
+        valB = parseInt(b.viewCount, 10) || 0;
+      } else {
+        valA = 0;
+        valB = 0;
+      }
+
+      if (order === 'asc') {
+        return valA - valB;
+      } else {
+        return valB - valA;
+      }
+    });
+
+    const filteredPhotos = sortedPhotos;
 
     const totalPhotosCount = photos.length;
     const downloadedCount = photos.filter(p => downloadedFiles.has(`${p.photoId.id}.jpg`)).length;
