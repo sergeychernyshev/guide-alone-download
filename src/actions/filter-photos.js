@@ -1,20 +1,10 @@
 const { getAuthenticatedClient } = require("../oauth");
 const { getDriveClient, listFiles, findOrCreateFolder, FOLDER_NAME } = require("../drive-manager");
-const { calculatePoseCounts, buildPhotoListHtml } = require("../utils/photo-utils");
+const { buildPhotoListHtml, buildPaginationHtml, calculatePoseCounts } = require("../utils/photo-utils");
 
-async function filterPhotos(req, ws, status) {
-  req.session.status = status;
-  const { allPhotos, search } = req.session;
-
-  const filteredBySearch = allPhotos.filter(photo => {
-    if (!search) {
-      return true;
-    }
-    if (photo.places && photo.places.length > 0 && photo.places[0].name) {
-      return photo.places[0].name.toLowerCase().includes(search.toLowerCase());
-    }
-    return false;
-  });
+async function filterPhotos(req, ws, payload) {
+  const { search, status, poseFilters, page } = payload;
+  const { allPhotos } = req.session;
 
   const oAuth2Client = await getAuthenticatedClient(req);
   const drive = await getDriveClient(oAuth2Client);
@@ -22,93 +12,70 @@ async function filterPhotos(req, ws, status) {
   const driveFiles = await listFiles(drive, folder.id);
   const downloadedFiles = new Set(driveFiles.map((f) => f.name));
 
-  const filteredByStatus = filteredBySearch.filter(photo => {
-    if (status === 'all') {
-      return true;
+  // Calculate unfiltered counts
+  const totalPhotosCount = allPhotos.length;
+  const downloadedCount = allPhotos.filter(p => downloadedFiles.has(`${p.photoId.id}.jpg`)).length;
+  const notDownloadedCount = totalPhotosCount - downloadedCount;
+
+  // 1. Filter by search term
+  const searchedPhotos = allPhotos.filter(photo => {
+    if (!search) return true;
+    if (photo.places && photo.places.length > 0 && photo.places[0].name) {
+      return photo.places[0].name.toLowerCase().includes(search.toLowerCase());
     }
+    return false;
+  });
+
+  // 2. Filter by download status
+  const statusFilteredPhotos = searchedPhotos.filter(photo => {
+    if (status === 'all') return true;
     const isDownloaded = downloadedFiles.has(`${photo.photoId.id}.jpg`);
     return status === 'downloaded' ? isDownloaded : !isDownloaded;
   });
 
-  const page = 1;
-  const pageSize = 50;
-  const totalPages = Math.ceil(filteredByStatus.length / pageSize);
-  const paginatedPhotos = filteredByStatus.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  );
+  // 3. Filter by pose
+  const poseFilteredPhotos = statusFilteredPhotos.filter(photo => {
+    if (!poseFilters || poseFilters.length === 0) return true;
+    return poseFilters.every(filter => {
+      if (filter.value === 'any') return true;
+      const exists = filter.property === 'latLngPair'
+        ? photo.pose && photo.pose.latLngPair !== undefined
+        : photo.pose && typeof photo.pose[filter.property] === 'number';
+      return filter.value === 'exists' ? exists : !exists;
+    });
+  });
 
-  const poseCounts = calculatePoseCounts(filteredBySearch);
+  // 4. Paginate
+  const photos = poseFilteredPhotos;
+  const pageSize = 50;
+  const totalPages = Math.ceil(photos.length / pageSize);
+  const currentPage = page || 1;
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedPhotos = photos.slice(startIndex, endIndex);
 
   const photoListHtml = buildPhotoListHtml(paginatedPhotos, downloadedFiles);
-
-  let paginationHtml = "";
-  if (totalPages > 1) {
-    const buildPageClick = (page) => {
-      return `onclick="changePage(${page})"`;
-    };
-
-    paginationHtml += '<div class="pagination">';
-    if (page > 1) {
-      paginationHtml += `<button ${buildPageClick(page - 1)}>Previous</button>`;
-    }
-
-    const maxPagesToShow = 10;
-    let startPage, endPage;
-
-    if (totalPages <= maxPagesToShow) {
-      startPage = 1;
-      endPage = totalPages;
-    } else {
-      const maxPagesBeforeCurrent = Math.floor(maxPagesToShow / 2);
-      const maxPagesAfterCurrent = Math.ceil(maxPagesToShow / 2) - 1;
-      if (page <= maxPagesBeforeCurrent) {
-        startPage = 1;
-        endPage = maxPagesToShow;
-      } else if (page + maxPagesAfterCurrent >= totalPages) {
-        startPage = totalPages - maxPagesToShow + 1;
-        endPage = totalPages;
-      } else {
-        startPage = page - maxPagesBeforeCurrent;
-        endPage = page + maxPagesAfterCurrent;
-      }
-    }
-
-    if (startPage > 1) {
-      paginationHtml += `<button ${buildPageClick(1)}>1</button>`;
-      if (startPage > 2) {
-        paginationHtml += `<span>...</span>`;
-      }
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      if (i === page) {
-        paginationHtml += `<button disabled>${i}</button>`;
-      } else {
-        paginationHtml += `<button ${buildPageClick(i)}>${i}</button>`;
-      }
-    }
-
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        paginationHtml += `<span>...</span>`;
-      }
-      paginationHtml += `<button ${buildPageClick(totalPages)}>${totalPages}</button>`;
-    }
-
-    if (page < totalPages) {
-      paginationHtml += `<button ${buildPageClick(page + 1)}>Next</button>`;
-    }
-    paginationHtml += "</div>";
-  }
+  const paginationHtmlTop = buildPaginationHtml(totalPages, currentPage, 'changePage', 'top');
+  const paginationHtmlBottom = buildPaginationHtml(totalPages, currentPage, 'changePage', 'bottom');
+  const poseCounts = calculatePoseCounts(allPhotos);
 
   ws.send(
     JSON.stringify({
       type: "filter-results",
       payload: {
         photoListHtml,
-        paginationHtml,
+        paginationHtmlTop,
+        paginationHtmlBottom,
         poseCounts,
+        downloadedCount,
+        notDownloadedCount,
+        totalPhotosCount,
+        startIndex: startIndex + 1,
+        endIndex: Math.min(endIndex, photos.length),
+        filteredTotal: photos.length,
+        currentPage,
+        totalPages,
+        requestPayload: payload, // Echo the original request payload
       },
     })
   );

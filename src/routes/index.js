@@ -18,7 +18,7 @@ const {
   PHOTO_LIST_FILE_NAME,
 } = require("../drive-manager");
 const { getState } = require("../download-state");
-const { calculatePoseCounts, buildPhotoListHtml } = require("../utils/photo-utils");
+const { calculatePoseCounts, buildPhotoListHtml, buildPaginationHtml } = require("../utils/photo-utils");
 
 const router = express.Router();
 
@@ -62,8 +62,13 @@ router.get("/", async (req, res, next) => {
 
     const search = req.query.search || "";
     const status = req.query.status || "all";
+    const poseQuery = req.query.pose || "";
+    const poseFilters = poseQuery.split(',').filter(Boolean).map(p => {
+      const [property, value] = p.split(':');
+      return { property, value };
+    });
 
-    const filteredPhotos = photos.filter(photo => {
+    const searchedPhotos = photos.filter(photo => {
       if (!search) {
         return true;
       }
@@ -77,7 +82,7 @@ router.get("/", async (req, res, next) => {
     const drivePhotoCount = driveFiles.filter(f => f.name !== PHOTO_LIST_FILE_NAME).length;
     const downloadedFiles = new Set(driveFiles.map((f) => f.name));
 
-    const filteredByStatus = filteredPhotos.filter(photo => {
+    const statusFilteredPhotos = searchedPhotos.filter(photo => {
       if (status === 'all') {
         return true;
       }
@@ -85,10 +90,7 @@ router.get("/", async (req, res, next) => {
       return status === 'downloaded' ? isDownloaded : !isDownloaded;
     });
 
-    const totalPhotosCount = filteredByStatus.length;
-
-    const poseFilters = req.query.poseFilters ? JSON.parse(req.query.poseFilters) : [];
-    const filteredByPose = filteredByStatus.filter(photo => {
+    const poseFilteredPhotos = statusFilteredPhotos.filter(photo => {
       if (!poseFilters || poseFilters.length === 0) {
         return true;
       }
@@ -103,9 +105,15 @@ router.get("/", async (req, res, next) => {
       });
     });
 
-    const poseCounts = calculatePoseCounts(filteredByStatus);
+    const filteredPhotos = poseFilteredPhotos;
 
-    const photoIdsFromStreetView = new Set(filteredByPose.map(p => `${p.photoId.id}.jpg`));
+    const totalPhotosCount = photos.length;
+    const downloadedCount = photos.filter(p => downloadedFiles.has(`${p.photoId.id}.jpg`)).length;
+    const notDownloadedCount = totalPhotosCount - downloadedCount;
+
+    const poseCounts = calculatePoseCounts(photos);
+
+    const photoIdsFromStreetView = new Set(filteredPhotos.map(p => `${p.photoId.id}.jpg`));
     const driveOnlyFiles = driveFiles.filter(f => f.name !== PHOTO_LIST_FILE_NAME && !photoIdsFromStreetView.has(f.name));
     const driveOnlyCount = driveOnlyFiles.length;
 
@@ -123,17 +131,15 @@ router.get("/", async (req, res, next) => {
     }, {});
     const duplicateFilesCount = Object.keys(duplicateFiles).length;
 
-    const downloadedPhotos = filteredByPose.filter((p) =>
+    const downloadedPhotos = filteredPhotos.filter((p) =>
       downloadedFiles.has(`${p.photoId.id}.jpg`)
     );
-    const missingPhotos = filteredByPose.filter(
+    const missingPhotos = filteredPhotos.filter(
       (p) => !downloadedFiles.has(`${p.photoId.id}.jpg`)
     );
 
     if (loggedIn) {
       req.session.allPhotos = photos;
-      req.session.search = search;
-      req.session.status = status;
       const allDownloadedPhotos = photos.filter((p) => downloadedFiles.has(`${p.photoId.id}.jpg`));
       const allMissingPhotos = photos.filter((p) => !downloadedFiles.has(`${p.photoId.id}.jpg`));
       req.session.downloadedPhotos = allDownloadedPhotos;
@@ -142,11 +148,10 @@ router.get("/", async (req, res, next) => {
 
     const page = parseInt(req.query.page, 10) || 1;
     const pageSize = 50;
-    const totalPages = Math.ceil(filteredByPose.length / pageSize);
-    const paginatedPhotos = filteredByPose.slice(
-      (page - 1) * pageSize,
-      page * pageSize
-    );
+    const totalPages = Math.ceil(filteredPhotos.length / pageSize);
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedPhotos = filteredPhotos.slice(startIndex, endIndex);
 
     const buildSortLink = (sortBy, label) => {
       const currentSort = req.query.sort || "date";
@@ -165,65 +170,8 @@ router.get("/", async (req, res, next) => {
       return `<a class="sort-link" href="/?sort=${sortBy}&order=${order}&search=${search}&status=${status}">${label}${indicator}</a>`;
     };
 
-    let paginationHtml = "";
-    if (totalPages > 1) {
-      const buildPageClick = (page) => {
-        return `onclick="changePage(${page})"`;
-      };
-
-      paginationHtml += '<div class="pagination">';
-      if (page > 1) {
-        paginationHtml += `<button ${buildPageClick(page - 1)}>Previous</button>`;
-      }
-
-      const maxPagesToShow = 10;
-      let startPage, endPage;
-
-      if (totalPages <= maxPagesToShow) {
-        startPage = 1;
-        endPage = totalPages;
-      } else {
-        const maxPagesBeforeCurrent = Math.floor(maxPagesToShow / 2);
-        const maxPagesAfterCurrent = Math.ceil(maxPagesToShow / 2) - 1;
-        if (page <= maxPagesBeforeCurrent) {
-          startPage = 1;
-          endPage = maxPagesToShow;
-        } else if (page + maxPagesAfterCurrent >= totalPages) {
-          startPage = totalPages - maxPagesToShow + 1;
-          endPage = totalPages;
-        } else {
-          startPage = page - maxPagesBeforeCurrent;
-          endPage = page + maxPagesAfterCurrent;
-        }
-      }
-
-      if (startPage > 1) {
-        paginationHtml += `<button ${buildPageClick(1)}>1</button>`;
-        if (startPage > 2) {
-          paginationHtml += `<span>...</span>`;
-        }
-      }
-
-      for (let i = startPage; i <= endPage; i++) {
-        if (i === page) {
-          paginationHtml += `<button disabled>${i}</button>`;
-        } else {
-          paginationHtml += `<button ${buildPageClick(i)}>${i}</button>`;
-        }
-      }
-
-      if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-          paginationHtml += `<span>...</span>`;
-        }
-        paginationHtml += `<button ${buildPageClick(totalPages)}>${totalPages}</button>`;
-      }
-
-      if (page < totalPages) {
-        paginationHtml += `<button ${buildPageClick(page + 1)}>Next</button>`;
-      }
-      paginationHtml += "</div>";
-    }
+    const paginationHtmlTop = buildPaginationHtml(totalPages, page, 'changePage', 'top');
+    const paginationHtmlBottom = buildPaginationHtml(totalPages, page, 'changePage', 'bottom');
 
     res.render("index", {
       isLoggedIn: loggedIn,
@@ -234,7 +182,7 @@ router.get("/", async (req, res, next) => {
       status: status,
       folderLink: loggedIn ? folderLink : null,
       downloadState: getState(),
-      downloadedCount: downloadedPhotos.length,
+      downloadedCount: downloadedCount,
       notDownloadedCount: missingPhotos.length,
       driveOnlyCount: loggedIn ? driveOnlyCount : 0,
       driveOnlyFiles: loggedIn ? driveOnlyFiles : [],
@@ -243,10 +191,16 @@ router.get("/", async (req, res, next) => {
       duplicateFilesCount: loggedIn ? duplicateFilesCount : 0,
       folderName: folderName,
       photoListHtml: buildPhotoListHtml(paginatedPhotos, downloadedFiles),
-      paginationHtml,
+      paginationHtmlTop,
+      paginationHtmlBottom,
       buildSortLink,
       totalPhotosCount,
       poseCounts,
+      startIndex: startIndex + 1,
+      endIndex: Math.min(endIndex, filteredPhotos.length),
+      filteredTotal: filteredPhotos.length,
+      currentPage: page,
+      totalPages,
     });
   } catch (error) {
     next(error);
