@@ -12,10 +12,10 @@
   "dependencies": {
     "axios": "^1.7.2",
     "ejs": "^3.1.10",
+    "exiftool-vendored": "^30.4.0",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "googleapis": "^140.0.0",
-    "image-metadata-editor": "^2023.2.3",
     "memorystore": "^1.6.7",
     "piexifjs": "^1.0.6",
     "ws": "^8.17.1",
