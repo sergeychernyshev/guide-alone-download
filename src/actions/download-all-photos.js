@@ -10,24 +10,7 @@ const {
   FOLDER_NAME,
 } = require("../drive-manager");
 const { updateState, getState } = require("../download-state");
-
-/**
- * Converts degrees to degrees-minutes-seconds rational format for EXIF data.
- * @param {number} deg - The degree value.
- * @returns {Array<Array<number>>} The DMS rational value.
- */
-function degToDmsRational(deg) {
-  const d = Math.floor(deg);
-  const minFloat = (deg - d) * 60;
-  const m = Math.floor(minFloat);
-  const secFloat = (minFloat - m) * 60;
-  const s = Math.round(secFloat * 100);
-  return [
-    [d, 1],
-    [m, 1],
-    [s, 100],
-  ];
-}
+const { degToDmsRational } = require("../utils/photo-utils");
 
 /**
  * Downloads all photos that are missing from Google Drive.
@@ -156,10 +139,29 @@ async function downloadAllPhotos(req, photos, downloadedPhotosCount, missingPhot
         [piexif.GPSIFD.GPSLongitudeRef]: lng < 0 ? "W" : "E",
         [piexif.GPSIFD.GPSLongitude]: degToDmsRational(Math.abs(lng)),
       };
-      exifObj["GPS"] = gpsData;
-      const exifbytes = piexif.dump(exifObj);
-      const newData = piexif.insert(exifbytes, jpegData);
-      const newJpeg = Buffer.from(newData, "binary");
+
+      if (typeof photo.pose.altitude === 'number') {
+        gpsData[piexif.GPSIFD.GPSAltitude] = [Math.round(photo.pose.altitude * 100), 100];
+        gpsData[piexif.GPSIFD.GPSAltitudeRef] = 0;
+      }
+
+      if (typeof photo.pose.heading === 'number') {
+        gpsData[piexif.GPSIFD.GPSImgDirection] = [Math.round(photo.pose.heading * 100), 100];
+        gpsData[piexif.GPSIFD.GPSImgDirectionRef] = "T";
+      }
+      if (typeof photo.pose.pitch === 'number' || typeof photo.pose.roll === 'number') {
+        const exifObjWithCustomTags = {
+          ...exifObj,
+          '0th': {
+            ...exifObj['0th'],
+            [piexif.ImageIFD.HostComputer]: `PosePitchDegrees=${photo.pose.pitch || 0}, PoseRollDegrees=${photo.pose.roll || 0}`,
+          },
+        };
+        exifbytes = piexif.dump(exifObjWithCustomTags);
+      }
+
+      let newData = piexif.insert(exifbytes, jpegData);
+      let newJpeg = Buffer.from(newData, "binary");
 
       // Create a readable stream from the photo data
       const stream = Readable.from(newJpeg);

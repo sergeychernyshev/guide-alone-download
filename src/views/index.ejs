@@ -162,7 +162,9 @@
           </button>
         </div>
         <button type="submit">Search</button>
-        <button type="button" onclick="resetFilters()" class="button">Reset Filters</button>
+        <button type="button" onclick="resetFilters()" class="button">
+          Reset Filters
+        </button>
       </form>
 
       <% if (isLoggedIn) { %>
@@ -270,12 +272,11 @@
       </div>
       <% } %>
 
-      <div id="photo-counter" style="margin-top: 1em;">
-        <% if (filteredTotal > 0) { %>
-          Showing photos <%= startIndex %>-<%= endIndex %> (page <%= currentPage %> of <%= totalPages %>) out of <%= filteredTotal %> filtered photos.
-        <% } else { %>
-          No photos match the current filters.
-        <% } %>
+      <div id="photo-counter" style="margin-top: 1em">
+        <% if (filteredTotal > 0) { %> Showing photos <%= startIndex %>-<%=
+        endIndex %> (page <%= currentPage %> of <%= totalPages %>) out of <%=
+        filteredTotal %> filtered photos. <% } else { %> No photos match the
+        current filters. <% } %>
       </div>
       <%- paginationHtmlTop %>
       <table>
@@ -303,9 +304,9 @@
     </div>
 
     <script>
-      const poseCounts = JSON.parse('<%- JSON.stringify(poseCounts || {}) %>');
-      const downloadState = JSON.parse('<%- JSON.stringify(downloadState || { inProgress: false }) %>');
-      const isLoggedIn = !!<%- JSON.stringify(isLoggedIn) %>;
+      const poseCounts = <%- JSON.stringify(poseCounts || {}) %>;
+      const downloadState = <%- JSON.stringify(downloadState || { inProgress: false }) %>;
+      const isLoggedIn = <%- !!isLoggedIn %>;
       const missingPhotosCount = <%- notDownloadedCount %>;
     </script>
     <script src="/js/main.js" defer></script>

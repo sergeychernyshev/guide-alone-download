@@ -17,7 +17,8 @@
     "googleapis": "^140.0.0",
     "memorystore": "^1.6.7",
     "piexifjs": "^1.0.6",
-    "ws": "^8.17.1"
+    "ws": "^8.17.1",
+    "xmp-js": "^0.0.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
