@@ -212,9 +212,19 @@ function connectWebSocket() {
       // 3. Update sort indicators
       document.querySelectorAll('.sort-link').forEach(link => {
         const sortBy = link.dataset.sortby;
+        // Clear existing arrows
+        const arrow = link.querySelector('.sort-arrow');
+        if (arrow) {
+          arrow.remove();
+        }
+
         if (sortBy === requestPayload.sort) {
           link.classList.add('active');
           link.dataset.order = requestPayload.order;
+          const arrowSpan = document.createElement('span');
+          arrowSpan.className = 'sort-arrow';
+          arrowSpan.innerHTML = requestPayload.order === 'asc' ? ' ▲' : ' ▼';
+          link.appendChild(arrowSpan);
         } else {
           link.classList.remove('active');
           link.dataset.order = 'desc';
