@@ -1,6 +1,6 @@
 const piexif = require("piexifjs");
 const { Readable } = require("stream");
-const { JpegEditor } = require("image-metadata-editor");
+
 const { getAuthenticatedClient } = require("../oauth");
 const { downloadPhoto } = require("../photo-manager");
 const {
