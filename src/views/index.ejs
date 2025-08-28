@@ -305,7 +305,7 @@
     <script>
       const poseCounts = JSON.parse('<%- JSON.stringify(poseCounts || {}) %>');
       const downloadState = JSON.parse('<%- JSON.stringify(downloadState || { inProgress: false }) %>');
-      const isLoggedIn = <%- isLoggedIn %>;
+      const isLoggedIn = !!<%- JSON.stringify(isLoggedIn) %>;
       const missingPhotosCount = <%- notDownloadedCount %>;
     </script>
     <script src="/js/main.js" defer></script>
