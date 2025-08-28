@@ -93,6 +93,16 @@ async function downloadSinglePhoto(req, photo) {
         [piexif.GPSIFD.GPSLongitudeRef]: lng < 0 ? "W" : "E",
         [piexif.GPSIFD.GPSLongitude]: degToDmsRational(Math.abs(lng)),
       };
+
+      if (typeof photo.pose.altitude === 'number') {
+        gpsData[piexif.GPSIFD.GPSAltitude] = [Math.round(photo.pose.altitude * 100), 100];
+        gpsData[piexif.GPSIFD.GPSAltitudeRef] = 0;
+      }
+
+      if (typeof photo.pose.heading === 'number') {
+        gpsData[piexif.GPSIFD.GPSImgDirection] = [Math.round(photo.pose.heading * 100), 100];
+        gpsData[piexif.GPSIFD.GPSImgDirectionRef] = "T";
+      }
       exifObj["GPS"] = gpsData;
       const exifbytes = piexif.dump(exifObj);
       const newData = piexif.insert(exifbytes, jpegData);
