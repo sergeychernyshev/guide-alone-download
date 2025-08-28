@@ -14,7 +14,7 @@ async function filterPhotos(req, ws, payload) {
 
   // Calculate unfiltered counts
   const totalPhotosCount = allPhotos.length;
-  const downloadedCount = allPhotos.filter(p => downloadedFiles.has(`${p.photoId.id}.jpg`)).length;
+  const downloadedCount = allPhotos.filter(photo => downloadedFiles.has(`${photo.photoId.id}.jpg`)).length;
   const notDownloadedCount = totalPhotosCount - downloadedCount;
 
   // 1. Filter by search term
