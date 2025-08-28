@@ -233,8 +233,8 @@ function connectWebSocket() {
           .join(",");
         if (poseQuery) params.set("pose", poseQuery);
         if (requestPayload.page > 1) params.set("page", requestPayload.page);
-        if (requestPayload.sort) params.set("sort", requestPayload.sort);
-        if (requestPayload.order) params.set("order", requestPayload.order);
+        if (requestPayload.sort && requestPayload.sort !== 'date') params.set("sort", requestPayload.sort);
+        if (requestPayload.order && requestPayload.order !== 'desc') params.set("order", requestPayload.order);
 
         const newQueryString = params.toString()
           ? `?${params.toString()}`
