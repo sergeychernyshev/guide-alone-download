@@ -311,6 +311,13 @@ document.addEventListener("DOMContentLoaded", () => {
   updatePoseCounts(poseCounts);
   toggleClearButton();
 
+  document.body.addEventListener('click', (event) => {
+    if (event.target.matches('.sort-link')) {
+      event.preventDefault();
+      sortPhotos(event.target.dataset.sortby);
+    }
+  });
+
   if (downloadState.inProgress) {
     document.getElementById("download-progress").style.display = "block";
     connectWebSocket();

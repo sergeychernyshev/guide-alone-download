@@ -160,7 +160,7 @@ router.get("/", async (req, res, next) => {
       if (currentSort === sortBy) {
         indicator = currentOrder === "asc" ? " &uarr;" : " &darr;";
       }
-      return `<a class="sort-link" href="javascript:sortPhotos('${sortBy}')">${label}${indicator}</a>`;
+      return `<a class="sort-link" href="#" data-sortby="${sortBy}">${label}${indicator}</a>`;
     };
 
     const paginationHtmlTop = buildPaginationHtml(totalPages, page, 'changePage', 'top');
