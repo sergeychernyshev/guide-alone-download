@@ -783,8 +783,17 @@
         setCheckboxState(checkbox, states[nextStateIndex], silent);
       }
 
+      function getFiltersFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        return {
+          search: params.get('search') || '',
+          status: params.get('status') || 'all',
+          pose: params.get('pose')?.split(',').filter(Boolean) || [],
+          page: parseInt(params.get('page') || '1', 10),
+        };
+      }
+
       window.addEventListener('popstate', (event) => {
-        // When user navigates, update the UI controls to match the new URL state.
         const filters = getFiltersFromQuery();
         document.getElementById('search-input').value = filters.search;
         document.querySelector('.status-filter a.active').classList.remove('active');
@@ -792,12 +801,9 @@
         document.querySelectorAll('.pose-filter-group input[type="checkbox"]').forEach(checkbox => {
           const poseFilter = filters.pose.find(p => p.startsWith(checkbox.name));
           const newState = poseFilter ? poseFilter.split(':')[1] : 'any';
-          setCheckboxState(checkbox, newState, true); // Update UI silently
+          setCheckboxState(checkbox, newState, true);
         });
-
-        // Now that the UI is synced with the URL, apply the filters.
-        // Pass isPopState to prevent creating a new history entry.
-        applyFilters({ isPopState: true });
+        applyFilters({ ...filters, isPopState: true });
       });
 
       window.addEventListener('DOMContentLoaded', (event) => {
