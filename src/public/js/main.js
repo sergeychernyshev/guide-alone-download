@@ -187,7 +187,7 @@ function connectWebSocket() {
           "No photos match the current filters.";
       }
 
-      // 2. Update URL (if not a popstate event)
+      // 2. Update URL and sort UI (if not a popstate event)
       if (!requestPayload.isPopState) {
         const params = new URLSearchParams();
         if (requestPayload.search) params.set("search", requestPayload.search);
@@ -198,6 +198,8 @@ function connectWebSocket() {
           .join(",");
         if (poseQuery) params.set("pose", poseQuery);
         if (requestPayload.page > 1) params.set("page", requestPayload.page);
+        if (requestPayload.sort) params.set("sort", requestPayload.sort);
+        if (requestPayload.order) params.set("order", requestPayload.order);
 
         const newQueryString = params.toString()
           ? `?${params.toString()}`
@@ -207,7 +209,19 @@ function connectWebSocket() {
         }
       }
 
-      // 3. Scroll if needed
+      // 3. Update sort indicators
+      document.querySelectorAll('.sort-link').forEach(link => {
+        const sortBy = link.dataset.sortby;
+        if (sortBy === requestPayload.sort) {
+          link.classList.add('active');
+          link.dataset.order = requestPayload.order;
+        } else {
+          link.classList.remove('active');
+          link.dataset.order = 'desc';
+        }
+      });
+
+      // 4. Scroll if needed
       if (requestPayload.location === "bottom") {
         window.scrollTo(0, 0);
       }
