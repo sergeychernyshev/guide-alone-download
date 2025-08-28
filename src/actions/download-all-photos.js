@@ -1,6 +1,5 @@
 const piexif = require("piexifjs");
 const { Readable } = require("stream");
-const { exiftool } = require("exiftool-vendored");
 const { getAuthenticatedClient } = require("../oauth");
 const { downloadPhoto } = require("../photo-manager");
 const {
@@ -150,18 +149,19 @@ async function downloadAllPhotos(req, photos, downloadedPhotosCount, missingPhot
         gpsData[piexif.GPSIFD.GPSImgDirection] = [Math.round(photo.pose.heading * 100), 100];
         gpsData[piexif.GPSIFD.GPSImgDirectionRef] = "T";
       }
-      exifObj["GPS"] = gpsData;
-      const exifbytes = piexif.dump(exifObj);
+      if (typeof photo.pose.pitch === 'number' || typeof photo.pose.roll === 'number') {
+        const exifObjWithCustomTags = {
+          ...exifObj,
+          '0th': {
+            ...exifObj['0th'],
+            [piexif.ImageIFD.HostComputer]: `PosePitchDegrees=${photo.pose.pitch || 0}, PoseRollDegrees=${photo.pose.roll || 0}`,
+          },
+        };
+        exifbytes = piexif.dump(exifObjWithCustomTags);
+      }
+
       let newData = piexif.insert(exifbytes, jpegData);
       let newJpeg = Buffer.from(newData, "binary");
-
-      if (typeof photo.pose.pitch === 'number' || typeof photo.pose.roll === 'number') {
-        const tags = {
-          PosePitchDegrees: photo.pose.pitch || 0,
-          PoseRollDegrees: photo.pose.roll || 0,
-        };
-        newJpeg = await exiftool.write(newJpeg, tags, ['-overwrite_original']);
-      }
 
       // Create a readable stream from the photo data
       const stream = Readable.from(newJpeg);
