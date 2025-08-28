@@ -51,7 +51,6 @@ async function searchPhotos(req, ws, payload) {
         notDownloadedCount,
         totalPhotosCount,
         poseCounts,
-        newCurrentPage: currentPage,
       },
     })
   );

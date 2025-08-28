@@ -598,7 +598,6 @@
 
     <script>
       let ws;
-      let currentPage = <%= currentPage %>;
 
       function filterByPose() {
         const selectedFilters = Array.from(document.querySelectorAll('.pose-filter-group input[type="checkbox"]')).map(checkbox => {
@@ -614,18 +613,36 @@
         }
       }
 
+      function changePage(page) {
+        window.location.hash = `page=${page}`;
+      }
+
+      function searchPhotos() {
+        const search = document.getElementById('search-input').value;
+        const page = parseInt(window.location.hash.replace('#page=', ''), 10) || 1;
+        connectWebSocket();
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'search-photos', payload: { search, page } }));
+        } else {
+          ws.onopen = () => {
+            ws.send(JSON.stringify({ type: 'search-photos', payload: { search, page } }));
+          };
+        }
+      }
+
       function filterPhotos(status) {
         document.getElementById('filter-all').classList.remove('active');
         document.getElementById('filter-downloaded').classList.remove('active');
         document.getElementById('filter-not-downloaded').classList.remove('active');
         document.getElementById(`filter-${status}`).classList.add('active');
 
+        const page = parseInt(window.location.hash.replace('#page=', ''), 10) || 1;
         connectWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'filter-photos', payload: { status, page: currentPage } }));
+          ws.send(JSON.stringify({ type: 'filter-photos', payload: { status, page } }));
         } else {
           ws.onopen = () => {
-            ws.send(JSON.stringify({ type: 'filter-photos', payload: { status, page: currentPage } }));
+            ws.send(JSON.stringify({ type: 'filter-photos', payload: { status, page } }));
           };
         }
       }
@@ -634,29 +651,6 @@
         document.getElementById('search-input').value = '';
         toggleClearButton();
         searchPhotos();
-      }
-
-      function searchPhotos() {
-        const search = document.getElementById('search-input').value;
-        connectWebSocket();
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'search-photos', payload: { search, page: currentPage } }));
-        } else {
-          ws.onopen = () => {
-            ws.send(JSON.stringify({ type: 'search-photos', payload: { search, page: currentPage } }));
-          };
-        }
-      }
-
-      function changePage(page) {
-        connectWebSocket();
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
-        } else {
-          ws.onopen = () => {
-            ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
-          };
-        }
       }
 
       function connectWebSocket() {
@@ -687,31 +681,28 @@
           }
 
           if (data.type === 'filter-results') {
-            const { photoListHtml, paginationHtml, newCurrentPage, poseCounts } = data.payload;
+            const { photoListHtml, paginationHtml, poseCounts } = data.payload;
             document.querySelector('tbody').innerHTML = photoListHtml;
             document.querySelector('.pagination').innerHTML = paginationHtml;
             updatePoseCounts(poseCounts);
-            currentPage = newCurrentPage;
             return;
           }
 
           if (data.type === 'search-results') {
-            const { photoListHtml, paginationHtml, downloadedCount, notDownloadedCount, totalPhotosCount, poseCounts, newCurrentPage } = data.payload;
+            const { photoListHtml, paginationHtml, downloadedCount, notDownloadedCount, totalPhotosCount, poseCounts } = data.payload;
             document.querySelector('tbody').innerHTML = photoListHtml;
             document.querySelector('.pagination').innerHTML = paginationHtml;
             document.getElementById('downloaded-count').textContent = downloadedCount;
             document.getElementById('not-downloaded-count').textContent = notDownloadedCount;
             document.getElementById('all-count').textContent = totalPhotosCount;
             updatePoseCounts(poseCounts);
-            currentPage = newCurrentPage;
             return;
           }
 
           if (data.type === 'page-changed') {
-            const { photoListHtml, paginationHtml, newCurrentPage } = data.payload;
+            const { photoListHtml, paginationHtml } = data.payload;
             document.querySelector('tbody').innerHTML = photoListHtml;
             document.querySelector('.pagination').innerHTML = paginationHtml;
-            currentPage = newCurrentPage;
             return;
           }
 
@@ -823,7 +814,33 @@
         filterByPose();
       }
 
+      window.addEventListener('hashchange', () => {
+        const page = parseInt(window.location.hash.replace('#page=', ''), 10) || 1;
+        connectWebSocket();
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
+        } else {
+          ws.onopen = () => {
+            ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
+          };
+        }
+      });
+
       window.addEventListener('DOMContentLoaded', (event) => {
+        if (window.location.hash) {
+          const page = parseInt(window.location.hash.replace('#page=', ''), 10) || 1;
+          if (page > 1) {
+            connectWebSocket();
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
+            } else {
+              ws.onopen = () => {
+                ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
+              };
+            }
+          }
+        }
+
         const initialPoseCounts = <%- JSON.stringify(poseCounts) %>;
         updatePoseCounts(initialPoseCounts);
 

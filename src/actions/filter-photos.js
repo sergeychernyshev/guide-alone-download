@@ -36,7 +36,6 @@ async function filterPhotos(req, ws, payload) {
       payload: {
         photoListHtml,
         paginationHtml,
-        newCurrentPage: currentPage,
       },
     })
   );
