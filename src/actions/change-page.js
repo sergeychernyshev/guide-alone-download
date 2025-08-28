@@ -97,6 +97,7 @@ async function changePage(req, ws, page) {
       payload: {
         photoListHtml,
         paginationHtml,
+        newCurrentPage: page,
       },
     })
   );

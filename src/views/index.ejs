@@ -598,6 +598,7 @@
 
     <script>
       let ws;
+      let currentPage = <%= currentPage %>;
 
       function filterByPose() {
         const selectedFilters = Array.from(document.querySelectorAll('.pose-filter-group input[type="checkbox"]')).map(checkbox => {
@@ -621,10 +622,10 @@
 
         connectWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'filter-photos', payload: { status } }));
+          ws.send(JSON.stringify({ type: 'filter-photos', payload: { status, page: currentPage } }));
         } else {
           ws.onopen = () => {
-            ws.send(JSON.stringify({ type: 'filter-photos', payload: { status } }));
+            ws.send(JSON.stringify({ type: 'filter-photos', payload: { status, page: currentPage } }));
           };
         }
       }
@@ -639,10 +640,10 @@
         const search = document.getElementById('search-input').value;
         connectWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'search-photos', payload: { search } }));
+          ws.send(JSON.stringify({ type: 'search-photos', payload: { search, page: currentPage } }));
         } else {
           ws.onopen = () => {
-            ws.send(JSON.stringify({ type: 'search-photos', payload: { search } }));
+            ws.send(JSON.stringify({ type: 'search-photos', payload: { search, page: currentPage } }));
           };
         }
       }
@@ -686,28 +687,31 @@
           }
 
           if (data.type === 'filter-results') {
-            const { photoListHtml, paginationHtml, poseCounts } = data.payload;
+            const { photoListHtml, paginationHtml, newCurrentPage, poseCounts } = data.payload;
             document.querySelector('tbody').innerHTML = photoListHtml;
             document.querySelector('.pagination').innerHTML = paginationHtml;
             updatePoseCounts(poseCounts);
+            currentPage = newCurrentPage;
             return;
           }
 
           if (data.type === 'search-results') {
-            const { photoListHtml, paginationHtml, downloadedCount, notDownloadedCount, totalPhotosCount, poseCounts } = data.payload;
+            const { photoListHtml, paginationHtml, downloadedCount, notDownloadedCount, totalPhotosCount, poseCounts, newCurrentPage } = data.payload;
             document.querySelector('tbody').innerHTML = photoListHtml;
             document.querySelector('.pagination').innerHTML = paginationHtml;
             document.getElementById('downloaded-count').textContent = downloadedCount;
             document.getElementById('not-downloaded-count').textContent = notDownloadedCount;
             document.getElementById('all-count').textContent = totalPhotosCount;
             updatePoseCounts(poseCounts);
+            currentPage = newCurrentPage;
             return;
           }
 
           if (data.type === 'page-changed') {
-            const { photoListHtml, paginationHtml } = data.payload;
+            const { photoListHtml, paginationHtml, newCurrentPage } = data.payload;
             document.querySelector('tbody').innerHTML = photoListHtml;
             document.querySelector('.pagination').innerHTML = paginationHtml;
+            currentPage = newCurrentPage;
             return;
           }
 

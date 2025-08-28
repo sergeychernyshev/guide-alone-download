@@ -49,10 +49,10 @@ async function handleMessage(req, ws, message) {
       await changePage(req, ws, payload.page);
       break;
     case "search-photos":
-      await searchPhotos(req, ws, payload.search);
+      await searchPhotos(req, ws, payload);
       break;
     case "filter-photos":
-      await filterPhotos(req, ws, payload.status);
+      await filterPhotos(req, ws, payload);
       break;
     case "filter-by-pose":
       await filterByPose(req, ws, payload.filters);
