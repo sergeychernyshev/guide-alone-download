@@ -130,7 +130,7 @@ function resetFilters() {
     .forEach((checkbox) => {
       setCheckboxState(checkbox, "any", true);
     });
-  applyFilters({ search: "", status: "all", poseFilters: [], page: 1 });
+  applyFilters({ search: "", status: "all", poseFilters: [], page: 1, sort: "date", order: "desc" });
 }
 
 function confirmDownload() {
