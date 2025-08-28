@@ -14,7 +14,9 @@ function getCurrentFilters() {
     new URLSearchParams(window.location.search).get("page") || "1",
     10
   );
-  return { search, status, poseFilters, page };
+  const sort = new URLSearchParams(window.location.search).get("sort") || "date";
+  const order = new URLSearchParams(window.location.search).get("order") || "desc";
+  return { search, status, poseFilters, page, sort, order };
 }
 
 function applyFilters(newFilters = {}) {
@@ -26,6 +28,8 @@ function applyFilters(newFilters = {}) {
     status: filters.status,
     poseFilters: filters.poseFilters,
     page: filters.page,
+    sort: filters.sort,
+    order: filters.order,
     location: newFilters.location, // Pass location for scrolling
     isPopState: newFilters.isPopState, // Flag for history handling
   };
@@ -38,6 +42,16 @@ function applyFilters(newFilters = {}) {
       ws.send(JSON.stringify({ type: "filter-photos", payload }));
     };
   }
+}
+
+function sortPhotos(sort) {
+  const currentOrder = new URLSearchParams(window.location.search).get("order") || "desc";
+  const currentSort = new URLSearchParams(window.location.search).get("sort") || "date";
+  let order = "asc";
+  if (currentSort === sort) {
+    order = currentOrder === "asc" ? "desc" : "asc";
+  }
+  applyFilters({ sort, order });
 }
 
 function changePage(page, location) {
