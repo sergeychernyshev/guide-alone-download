@@ -783,30 +783,30 @@
         setCheckboxState(checkbox, states[nextStateIndex], silent);
       }
 
-      function getFiltersFromQuery() {
-        const params = new URLSearchParams(window.location.search);
-        return {
-          search: params.get('search') || '',
-          status: params.get('status') || 'all',
-          pose: params.get('pose')?.split(',').filter(Boolean) || [],
-          page: parseInt(params.get('page') || '1', 10),
-        };
-      }
+      document.addEventListener('DOMContentLoaded', () => {
+        function getFiltersFromQuery() {
+          const params = new URLSearchParams(window.location.search);
+          return {
+            search: params.get('search') || '',
+            status: params.get('status') || 'all',
+            pose: params.get('pose')?.split(',').filter(Boolean) || [],
+            page: parseInt(params.get('page') || '1', 10),
+          };
+        }
 
-      window.addEventListener('popstate', (event) => {
-        const filters = getFiltersFromQuery();
-        document.getElementById('search-input').value = filters.search;
-        document.querySelector('.status-filter a.active').classList.remove('active');
-        document.getElementById(`filter-${filters.status}`).classList.add('active');
-        document.querySelectorAll('.pose-filter-group input[type="checkbox"]').forEach(checkbox => {
-          const poseFilter = filters.pose.find(p => p.startsWith(checkbox.name));
-          const newState = poseFilter ? poseFilter.split(':')[1] : 'any';
-          setCheckboxState(checkbox, newState, true);
+        window.addEventListener('popstate', (event) => {
+          const filters = getFiltersFromQuery();
+          document.getElementById('search-input').value = filters.search;
+          document.querySelector('.status-filter a.active').classList.remove('active');
+          document.getElementById(`filter-${filters.status}`).classList.add('active');
+          document.querySelectorAll('.pose-filter-group input[type="checkbox"]').forEach(checkbox => {
+            const poseFilter = filters.pose.find(p => p.startsWith(checkbox.name));
+            const newState = poseFilter ? poseFilter.split(':')[1] : 'any';
+            setCheckboxState(checkbox, newState, true);
+          });
+          applyFilters({ ...filters, isPopState: true });
         });
-        applyFilters({ ...filters, isPopState: true });
-      });
 
-      window.addEventListener('DOMContentLoaded', (event) => {
         const filters = getFiltersFromQuery();
         document.getElementById('search-input').value = filters.search;
         document.querySelector('.status-filter a.active').classList.remove('active');
