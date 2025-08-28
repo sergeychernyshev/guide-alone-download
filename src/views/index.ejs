@@ -573,7 +573,14 @@
       </div>
       <% } %>
 
-      <div id="photo-counter" style="margin-top: 1em;"></div>
+      <div id="photo-counter" style="margin-top: 1em;">
+        <% if (filteredTotal > 0) { %>
+          Showing photos <%= startIndex %>-<%= endIndex %> (page <%= currentPage %> of <%= totalPages %>) out of <%= filteredTotal %> filtered photos.
+        <% } else { %>
+          No photos match the current filters.
+        <% } %>
+      </div>
+      <%- paginationHtmlTop %>
       <table>
         <thead>
           <tr>
@@ -589,7 +596,7 @@
           <%- photoListHtml %>
         </tbody>
       </table>
-      <%- paginationHtml %> <% } else if (isLoggedIn) { %>
+      <%- paginationHtmlBottom %> <% } else if (isLoggedIn) { %>
       <p>You do not have any photos uploaded 360 photos to Google Maps.</p>
       <button id="update-btn" onclick="updatePhotoList()" class="update-btn">
         Check for new photos
@@ -601,13 +608,13 @@
     <script>
       let ws;
 
-      function updateHistory() {
+      function updateQueryString() {
         const search = document.getElementById('search-input').value;
         const status = document.querySelector('.status-filter a.active').id.replace('filter-', '');
         const poseFilters = Array.from(document.querySelectorAll('.pose-filter-group input[type="checkbox"]'))
           .filter(c => c.dataset.state !== 'any')
           .map(c => `${c.name}:${c.dataset.state}`);
-        const page = parseInt(window.location.hash.match(/page=(\d+)/)?.[1] || '1', 10);
+        const page = parseInt(new URLSearchParams(window.location.search).get('page') || '1', 10);
 
         const params = new URLSearchParams();
         if (search) params.set('search', search);
@@ -615,11 +622,11 @@
         if (poseFilters.length > 0) params.set('pose', poseFilters.join(','));
         if (page > 1) params.set('page', page);
 
-        history.pushState(null, '', `#${params.toString()}`);
+        history.pushState(null, '', `?${params.toString()}`);
       }
 
-      function parseHash() {
-        const params = new URLSearchParams(window.location.hash.substring(1));
+      function getFiltersFromQuery() {
+        const params = new URLSearchParams(window.location.search);
         return {
           search: params.get('search') || '',
           status: params.get('status') || 'all',
@@ -629,8 +636,8 @@
       }
 
       function applyFilters() {
-        updateHistory();
-        const filters = parseHash();
+        updateQueryString();
+        const filters = getFiltersFromQuery();
         const payload = {
           search: filters.search,
           status: filters.status,
@@ -652,32 +659,35 @@
       }
 
       function filterByPose() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('page', 1);
+        history.pushState(null, '', `?${params.toString()}`);
         applyFilters();
       }
 
-      function changePage(page) {
-        const params = new URLSearchParams(window.location.hash.substring(1));
+      function changePage(page, location) {
+        if (location === 'bottom') {
+          window.scrollTo(0, 0);
+        }
+        const params = new URLSearchParams(window.location.search);
         params.set('page', page);
-        history.pushState(null, '', `#${params.toString()}`);
+        history.pushState(null, '', `?${params.toString()}`);
         applyFilters();
       }
 
       function searchPhotos() {
-        const params = new URLSearchParams(window.location.hash.substring(1));
+        const params = new URLSearchParams(window.location.search);
         params.set('page', 1);
-        history.pushState(null, '', `#${params.toString()}`);
+        params.set('search', document.getElementById('search-input').value);
+        history.pushState(null, '', `?${params.toString()}`);
         applyFilters();
       }
 
       function filterPhotos(status) {
-        document.getElementById('filter-all').classList.remove('active');
-        document.getElementById('filter-downloaded').classList.remove('active');
-        document.getElementById('filter-not-downloaded').classList.remove('active');
-        document.getElementById(`filter-${status}`).classList.add('active');
-
-        const params = new URLSearchParams(window.location.hash.substring(1));
+        const params = new URLSearchParams(window.location.search);
         params.set('page', 1);
-        history.pushState(null, '', `#${params.toString()}`);
+        params.set('status', status);
+        history.pushState(null, '', `?${params.toString()}`);
         applyFilters();
       }
 
@@ -688,14 +698,26 @@
       }
 
       function resetFilters() {
+        // Reset UI state first
         document.getElementById('search-input').value = '';
-        filterPhotos('all');
+        
+        document.querySelector('.status-filter a.active').classList.remove('active');
+        document.getElementById('filter-all').classList.add('active');
+
         document.querySelectorAll('.pose-filter-group input[type="checkbox"]').forEach(checkbox => {
-          checkbox.dataset.state = 'missing'; // Set to missing so the next state is 'any'
-          cycleCheckboxState(checkbox, true); // Silently cycle to 'any'
+          setCheckboxState(checkbox, 'any', true); // Silently set state to 'any'
         });
+
+        // Clear the query string to reset to page 1
+        history.pushState(null, '', window.location.pathname);
+
+        // Now, apply the reset filters, which will also update the URL
         applyFilters();
       }
+
+      window.addEventListener('popstate', (event) => {
+        applyFilters();
+      });
 
       function connectWebSocket() {
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -717,9 +739,10 @@
           const data = JSON.parse(event.data);
 
           if (data.type === 'filter-results') {
-            const { photoListHtml, paginationHtml, poseCounts, downloadedCount, notDownloadedCount, totalPhotosCount, startIndex, endIndex, filteredTotal, currentPage, totalPages } = data.payload;
+            const { photoListHtml, paginationHtmlTop, paginationHtmlBottom, poseCounts, downloadedCount, notDownloadedCount, totalPhotosCount, startIndex, endIndex, filteredTotal, currentPage, totalPages } = data.payload;
             document.querySelector('tbody').innerHTML = photoListHtml;
-            document.querySelector('.pagination').innerHTML = paginationHtml;
+            document.querySelector('.pagination[data-location="top"]').innerHTML = paginationHtmlTop;
+            document.querySelector('.pagination[data-location="bottom"]').innerHTML = paginationHtmlBottom;
             updatePoseCounts(poseCounts);
             document.getElementById('downloaded-count').textContent = downloadedCount;
             document.getElementById('not-downloaded-count').textContent = notDownloadedCount;
@@ -827,29 +850,25 @@
         }
       }
 
-      function cycleCheckboxState(checkbox, silent = false) {
-        const states = ['any', 'exists', 'missing'];
-        let currentState = checkbox.dataset.state;
-        let nextStateIndex = (states.indexOf(currentState) + 1) % states.length;
-        let nextState = states[nextStateIndex];
-        checkbox.dataset.state = nextState;
+      function setCheckboxState(checkbox, state, silent = false) {
+        checkbox.dataset.state = state;
 
-        if (nextState === 'any') {
+        if (state === 'any') {
           checkbox.checked = false;
           checkbox.indeterminate = false;
-        } else if (nextState === 'exists') {
+        } else if (state === 'exists') {
           checkbox.checked = true;
           checkbox.indeterminate = false;
-        } else if (nextState === 'missing') {
+        } else if (state === 'missing') {
           checkbox.checked = false;
           checkbox.indeterminate = true;
         }
 
         const label = checkbox.closest('label');
         const valueSpan = label.querySelector('.pose-filter-value');
-        if (nextState === 'any') {
+        if (state === 'any') {
           valueSpan.textContent = 'Any';
-        } else if (nextState === 'exists') {
+        } else if (state === 'exists') {
           valueSpan.textContent = 'Exists';
         } else {
           valueSpan.textContent = "Doesn't Exist";
@@ -860,12 +879,16 @@
         }
       }
 
-      window.addEventListener('hashchange', () => {
-        applyFilters();
-      });
+      function cycleCheckboxState(checkbox, silent = false) {
+        const states = ['any', 'exists', 'missing'];
+        let currentState = checkbox.dataset.state;
+        let nextStateIndex = (states.indexOf(currentState) + 1) % states.length;
+        let nextState = states[nextStateIndex];
+        setCheckboxState(checkbox, nextState, silent);
+      }
 
       window.addEventListener('DOMContentLoaded', (event) => {
-        const filters = parseHash();
+        const filters = getFiltersFromQuery();
         document.getElementById('search-input').value = filters.search;
 
         document.getElementById('filter-all').classList.remove('active');
@@ -882,10 +905,6 @@
             checkbox.dataset.state = 'any';
           }
         });
-
-        if (window.location.hash) {
-          applyFilters();
-        }
 
         const initialPoseCounts = <%- JSON.stringify(poseCounts) %>;
         updatePoseCounts(initialPoseCounts);

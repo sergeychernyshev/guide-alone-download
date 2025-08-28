@@ -69,19 +69,19 @@ function buildPhotoListHtml(photos, downloadedFiles) {
     .join("");
 }
 
-function buildPaginationHtml(totalPages, currentPage, action) {
+function buildPaginationHtml(totalPages, currentPage, action, location) {
   let paginationHtml = "";
   if (totalPages > 1) {
     const buildPageClick = (page) => {
-      return `onclick="${action}(${page})"`;
+      return `onclick="${action}(${page}, '${location}')"`;
     };
 
-    paginationHtml += '<div class="pagination">';
+    paginationHtml += `<div class="pagination" data-location="${location}">`;
     if (currentPage > 1) {
       paginationHtml += `<button ${buildPageClick(currentPage - 1)}>Previous</button>`;
     }
 
-    const maxPagesToShow = 10;
+    const maxPagesToShow = 7;
     let startPage, endPage;
 
     if (totalPages <= maxPagesToShow) {

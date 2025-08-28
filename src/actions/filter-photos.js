@@ -55,7 +55,8 @@ async function filterPhotos(req, ws, payload) {
   const paginatedPhotos = photos.slice(startIndex, endIndex);
 
   const photoListHtml = buildPhotoListHtml(paginatedPhotos, downloadedFiles);
-  const paginationHtml = buildPaginationHtml(totalPages, currentPage, 'changePage');
+  const paginationHtmlTop = buildPaginationHtml(totalPages, currentPage, 'changePage', 'top');
+  const paginationHtmlBottom = buildPaginationHtml(totalPages, currentPage, 'changePage', 'bottom');
   const poseCounts = calculatePoseCounts(allPhotos);
 
   ws.send(
@@ -63,7 +64,8 @@ async function filterPhotos(req, ws, payload) {
       type: "filter-results",
       payload: {
         photoListHtml,
-        paginationHtml,
+        paginationHtmlTop,
+        paginationHtmlBottom,
         poseCounts,
         downloadedCount,
         notDownloadedCount,
