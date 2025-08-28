@@ -1,3 +1,16 @@
+function degToDmsRational(deg) {
+    const d = Math.floor(deg);
+    const minFloat = (deg - d) * 60;
+    const m = Math.floor(minFloat);
+    const secFloat = (minFloat - m) * 60;
+    const s = Math.round(secFloat * 100);
+    return [
+      [d, 1],
+      [m, 1],
+      [s, 100],
+    ];
+}
+
 function calculatePoseCounts(photos) {
     const poseCounts = {
         heading: { exists: 0, missing: 0 },
@@ -132,4 +145,4 @@ function buildPaginationHtml(totalPages, currentPage, action, location) {
   return paginationHtml;
 }
 
-module.exports = { calculatePoseCounts, buildPhotoListHtml, buildPaginationHtml };
+module.exports = { calculatePoseCounts, buildPhotoListHtml, buildPaginationHtml, degToDmsRational };

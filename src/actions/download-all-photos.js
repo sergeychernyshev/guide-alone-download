@@ -11,24 +11,7 @@ const {
   FOLDER_NAME,
 } = require("../drive-manager");
 const { updateState, getState } = require("../download-state");
-
-/**
- * Converts degrees to degrees-minutes-seconds rational format for EXIF data.
- * @param {number} deg - The degree value.
- * @returns {Array<Array<number>>} The DMS rational value.
- */
-function degToDmsRational(deg) {
-  const d = Math.floor(deg);
-  const minFloat = (deg - d) * 60;
-  const m = Math.floor(minFloat);
-  const secFloat = (minFloat - m) * 60;
-  const s = Math.round(secFloat * 100);
-  return [
-    [d, 1],
-    [m, 1],
-    [s, 100],
-  ];
-}
+const { degToDmsRational } = require("../utils/photo-utils");
 
 /**
  * Downloads all photos that are missing from Google Drive.
