@@ -4,6 +4,7 @@ const { cancelDownload } = require("./actions/cancel-download");
 const { deleteDuplicates } = require("./actions/delete-duplicates");
 const { updatePhotoList } = require("./actions/update-photo-list");
 const { filterPhotos } = require("./actions/filter-photos");
+const { updateState } = require("./download-state");
 
 
 /**
@@ -32,12 +33,16 @@ async function handleMessage(req, ws, message) {
       await deleteDuplicates(req, payload.fileIds);
       break;
     case "download-photo":
-      const allPhotos = req.session.downloadedPhotos.concat(req.session.missingPhotos);
+      const allPhotos = (req.session.downloadedPhotos || []).concat(req.session.missingPhotos || []);
       const photo = allPhotos.find(p => p.photoId.id === payload.photoId);
-      await downloadSinglePhoto(
-        req,
-        photo,
-      );
+      if (photo) {
+        await downloadSinglePhoto(
+          req,
+          photo,
+        );
+      } else {
+        updateState({ error: `Photo with ID ${payload.photoId} not found.` });
+      }
       break;
     case "update-photo-list":
       await updatePhotoList(req);
