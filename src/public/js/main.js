@@ -223,7 +223,7 @@ function connectWebSocket() {
           link.dataset.order = requestPayload.order;
           const arrowSpan = document.createElement('span');
           arrowSpan.className = 'sort-arrow';
-          arrowSpan.innerHTML = requestPayload.order === 'asc' ? ' ▲' : ' ▼';
+          arrowSpan.innerHTML = requestPayload.order === 'asc' ? ' &uarr;' : ' &darr;';
           link.appendChild(arrowSpan);
         } else {
           link.classList.remove('active');
