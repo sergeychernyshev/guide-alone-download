@@ -65,4 +65,41 @@ async function downloadPhoto(photoUrl, authClient, progressCallback = () => {}) 
   return { data: Buffer.from(response.data), size: response.data.length };
 }
 
-module.exports = { listAllPhotos, downloadPhoto };
+function filterPhotos(allPhotos, { search, status, filters, downloadedFiles }) {
+  const filteredBySearch = allPhotos.filter(photo => {
+    if (!search) {
+      return true;
+    }
+    if (photo.places && photo.places.length > 0 && photo.places[0].name) {
+      return photo.places[0].name.toLowerCase().includes(search.toLowerCase());
+    }
+    return false;
+  });
+
+  const filteredByStatus = filteredBySearch.filter(photo => {
+    if (status === 'all') {
+      return true;
+    }
+    const isDownloaded = downloadedFiles.has(`${photo.photoId.id}.jpg`);
+    return status === 'downloaded' ? isDownloaded : !isDownloaded;
+  });
+
+  const filteredByPose = filteredByStatus.filter(photo => {
+    if (!filters || filters.length === 0) {
+      return true;
+    }
+    return filters.every(filter => {
+      if (filter.value === 'any') {
+        return true;
+      }
+      const exists = filter.property === 'latLngPair'
+        ? photo.pose && photo.pose.latLngPair !== undefined
+        : photo.pose && typeof photo.pose[filter.property] === 'number';
+      return filter.value === 'exists' ? exists : !exists;
+    });
+  });
+
+  return filteredByPose;
+}
+
+module.exports = { listAllPhotos, downloadPhoto, filterPhotos };
