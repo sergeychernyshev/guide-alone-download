@@ -304,6 +304,21 @@ function cycleCheckboxState(checkbox, silent = false) {
   setCheckboxState(checkbox, states[nextStateIndex], silent);
 }
 
+function downloadSinglePhoto(photoId) {
+  if (!isLoggedIn) return;
+  document.getElementById("download-progress").style.display = "block";
+  document.querySelector(".progress-bar-container").style.display = "block";
+  document.getElementById("progress-text").style.display = "block";
+  connectWebSocket();
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: "download-single", payload: { photoId } }));
+  } else {
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: "download-single", payload: { photoId } }));
+    };
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("popstate", (event) => {
     const filters = getFiltersFromQuery();
@@ -346,6 +361,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (event.target.matches('.sort-link')) {
       event.preventDefault();
       sortPhotos(event.target.dataset.sortby);
+    }
+    if (event.target.matches('.download-single-btn')) {
+      event.preventDefault();
+      downloadSinglePhoto(event.target.dataset.photoId);
     }
   });
 

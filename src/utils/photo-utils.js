@@ -56,7 +56,7 @@ function buildPhotoListHtml(photos, downloadedFiles) {
           : '<span class="status not-downloaded" title="Not Downloaded"><span class="status-text">Not Downloaded</span><span class="status-icon">&#10006;</span></span>'
       }</td>
       <td>
-        <button onclick="downloadSinglePhoto('${photo.photoId.id}')" class="button ${
+        <button data-photo-id="${photo.photoId.id}" class="button download-single-btn ${
           downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'redownload-btn' : 'download-btn'
         }" style="font-size: 12px; padding: 5px 10px;" title="${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'Re-download' : 'Download'}">
           <span class="button-text">${downloadedFiles.has(`${photo.photoId.id}.jpg`) ? 'Re-download' : 'Download'}</span>
