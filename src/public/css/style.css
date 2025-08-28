@@ -1,302 +1,302 @@
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
-        line-height: 1.6;
-        padding: 2em;
-        margin: auto;
-        background: #f7f7f7;
-      }
-      .container {
-        background: white;
-        padding: 2em;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
-      h1 {
-        color: #333;
-      }
-      .button,
-      button {
-        display: inline-block;
-        text-decoration: none;
-        background: #4285f4;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
-        border: none;
-        cursor: pointer;
-        font-size: 16px;
-        margin-right: 10px;
-        line-height: 1.5;
-        box-sizing: border-box;
-        white-space: nowrap;
-      }
-      a {
-        color: #4285f4;
-        text-decoration: underline;
-      }
-      a.button {
-        color: white;
-        text-decoration: none;
-      }
-      .sort-link {
-        background: none;
-        color: #4285f4;
-        padding: 0;
-        border-radius: 0;
-        border: none;
-        font-size: inherit;
-        margin: 0;
-        line-height: inherit;
-        text-decoration: underline;
-      }
-      a.logout {
-        background: #db4437;
-      }
-      a.cancel {
-        background: #6c757d;
-      }
-      .download-btn {
-        background-color: #34a853;
-      }
-      .redownload-btn {
-        background-color: #c0c0c0;
-      }
-      #cancel-btn {
-        background: #db4437;
-        height: 1.5em;
-        line-height: 1;
-        align-self: flex-end;
-        margin-bottom: 1em;
-      }
-      .update-btn {
-        background: #34a853;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 1.5em;
-        margin-bottom: 1.5em;
-        table-layout: fixed;
-      }
-      th,
-      td {
-        text-align: left;
-        padding: 10px;
-        border-bottom: 1px solid #ddd;
-        font-size: 14px;
-      }
-      th {
-        background-color: #f2f2f2;
-        white-space: nowrap;
-      }
-      td:first-child {
-        font-family: monospace;
-        font-size: 12px;
-        max-width: 200px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .status {
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 12px;
-        color: white;
-        font-weight: 500;
-        white-space: nowrap;
-      }
-      .status-icon {
-        display: none;
-      }
-      .button-icon {
-        display: none;
-      }
-      @media (max-width: 768px) {
-        .status-text,
-        .button-text {
-          display: none;
-        }
-        .status-icon,
-        .button-icon {
-          display: inline;
-        }
-      }
-      .status.downloaded {
-        background-color: #34a853;
-      }
-      .status.not-downloaded {
-        background-color: #ea4335;
-      }
-      .pagination {
-        margin-top: 1em;
-        text-align: center;
-      }
-      .pagination a,
-      .pagination span {
-        color: #4285f4;
-        padding: 8px 16px;
-        text-decoration: none;
-        background: white;
-        border: 1px solid #ddd;
-        margin: 0 2px;
-      }
-      .pagination button {
-        color: #4285f4;
-        padding: 8px 16px;
-        text-decoration: none;
-        background: white;
-        border: 1px solid #ddd;
-        margin: 0 2px;
-        cursor: pointer;
-      }
-      .pagination button:hover {
-        background-color: #f1f1f1;
-      }
-      .pagination button:disabled {
-        background-color: #f1f1f1;
-        cursor: default;
-      }
-      .pagination a:hover {
-        background-color: #f1f1f1;
-      }
-      .pagination span {
-        border: 1px solid transparent;
-      }
-      .spinner {
-        border: 4px solid rgba(255, 255, 255, 0.3);
-        border-top: 4px solid #fff;
-        border-radius: 50%;
-        width: 16px;
-        height: 16px;
-        animation: spin 1s linear infinite;
-        display: inline-block;
-        vertical-align: middle;
-        margin-right: 10px;
-      }
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-      button:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-      }
-      .search-container {
-        position: relative;
-        flex-grow: 1;
-        margin-right: 10px;
-      }
-      #clear-search-btn {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        padding: 5px;
-        line-height: 1;
-        font-size: 12px;
-        margin: 0;
-      }
-      form input[type="text"] {
-        width: 100%;
-        padding: 9px 10px;
-        font-size: 16px;
-        line-height: 1.5;
-        border-radius: 5px;
-        border: 1px solid #ddd;
-        box-sizing: border-box;
-      }
-      .status-filter {
-        margin-top: 1em;
-        margin-bottom: 1em;
-      }
-      .status-filter a {
-        margin-right: 10px;
-        text-decoration: none;
-        padding: 5px 10px;
-        border-radius: 5px;
-      }
-      .status-filter a.active {
-        background-color: #f2f2f2;
-        font-weight: bold;
-      }
-      .status-filter a.has-count {
-        padding-right: 5px;
-      }
-      .progress-bar-container {
-        width: 100%;
-        background-color: #f3f3f3;
-        border-radius: 5px;
-        margin: 1em 0;
-      }
-      .progress-bar {
-        width: 0%;
-        height: 1.5em;
-        background-color: #4caf50;
-        text-align: center;
-        line-height: 1.5em;
-        color: white;
-        border-radius: 5px;
-      }
-      #progress-text {
-        margin-top: 10px;
-        display: none;
-      }
-      .accordion {
-        background-color: #eee;
-        color: #444;
-        cursor: pointer;
-        padding: 18px;
-        width: 100%;
-        border: none;
-        text-align: left;
-        outline: none;
-        font-size: 15px;
-        transition: 0.4s;
-      }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  line-height: 1.6;
+  padding: 2em;
+  margin: auto;
+  background: #f7f7f7;
+}
+.container {
+  background: white;
+  padding: 2em;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+h1 {
+  color: #333;
+}
+.button,
+button {
+  display: inline-block;
+  text-decoration: none;
+  background: #4285f4;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  margin-right: 10px;
+  line-height: 1.5;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+a {
+  color: #4285f4;
+  text-decoration: underline;
+}
+a.button {
+  color: white;
+  text-decoration: none;
+}
+.sort-link {
+  background: none;
+  color: #4285f4;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  font-size: inherit;
+  margin: 0;
+  line-height: inherit;
+  text-decoration: underline;
+}
+a.logout {
+  background: #db4437;
+}
+a.cancel {
+  background: #6c757d;
+}
+.download-btn {
+  background-color: #34a853;
+}
+.redownload-btn {
+  background-color: #c0c0c0;
+}
+#cancel-btn {
+  background: #db4437;
+  height: 1.5em;
+  line-height: 1;
+  align-self: flex-end;
+  margin-bottom: 1em;
+}
+.update-btn {
+  background: #34a853;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+  table-layout: fixed;
+}
+th,
+td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+}
+th {
+  background-color: #f2f2f2;
+  white-space: nowrap;
+}
+td:first-child {
+  font-family: monospace;
+  font-size: 12px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: white;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.status-icon {
+  display: none;
+}
+.button-icon {
+  display: none;
+}
+@media (max-width: 768px) {
+  .status-text,
+  .button-text {
+    display: none;
+  }
+  .status-icon,
+  .button-icon {
+    display: inline;
+  }
+}
+.status.downloaded {
+  background-color: #34a853;
+}
+.status.not-downloaded {
+  background-color: #ea4335;
+}
+.pagination {
+  margin-top: 1em;
+  text-align: center;
+}
+.pagination a,
+.pagination span {
+  color: #4285f4;
+  padding: 8px 16px;
+  text-decoration: none;
+  background: white;
+  border: 1px solid #ddd;
+  margin: 0 2px;
+}
+.pagination button {
+  color: #4285f4;
+  padding: 8px 16px;
+  text-decoration: none;
+  background: white;
+  border: 1px solid #ddd;
+  margin: 0 2px;
+  cursor: pointer;
+}
+.pagination button:hover {
+  background-color: #f1f1f1;
+}
+.pagination button:disabled {
+  background-color: #f1f1f1;
+  cursor: default;
+}
+.pagination a:hover {
+  background-color: #f1f1f1;
+}
+.pagination span {
+  border: 1px solid transparent;
+}
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #fff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.search-container {
+  position: relative;
+  flex-grow: 1;
+  margin-right: 10px;
+}
+#clear-search-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px;
+  line-height: 1;
+  font-size: 12px;
+  margin: 0;
+}
+form input[type="text"] {
+  width: 100%;
+  padding: 9px 10px;
+  font-size: 16px;
+  line-height: 1.5;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+}
+.status-filter {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+.status-filter a {
+  margin-right: 10px;
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+.status-filter a.active {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+.status-filter a.has-count {
+  padding-right: 5px;
+}
+.progress-bar-container {
+  width: 100%;
+  background-color: #f3f3f3;
+  border-radius: 5px;
+  margin: 1em 0;
+}
+.progress-bar {
+  width: 0%;
+  height: 1.5em;
+  background-color: #4caf50;
+  text-align: center;
+  line-height: 1.5em;
+  color: white;
+  border-radius: 5px;
+}
+#progress-text {
+  margin-top: 10px;
+  display: none;
+}
+.accordion {
+  background-color: #eee;
+  color: #444;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+  transition: 0.4s;
+}
 
-      .active,
-      .accordion:hover {
-        background-color: #ccc;
-      }
+.active,
+.accordion:hover {
+  background-color: #ccc;
+}
 
-      .panel {
-        padding: 0 18px;
-        background-color: white;
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.2s ease-out;
-      }
-      .pose-filter {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5em;
-        margin-bottom: 1em;
-      }
-      .pose-filter-group {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        border: 1px solid #eee;
-        padding: 0.5em;
-        border-radius: 5px;
-      }
-      .pose-filter-label {
-        font-weight: bold;
-      }
-      .pose-filter-value {
-        font-style: italic;
-      }
-      input[type="checkbox"][data-state="any"] {
-        accent-color: grey;
-      }
-      input[type="checkbox"][data-state="exists"] {
-        accent-color: green;
-      }
-      input[type="checkbox"][data-state="missing"] {
-        accent-color: red;
-      }
+.panel {
+  padding: 0 18px;
+  background-color: white;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+}
+.pose-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin-bottom: 1em;
+}
+.pose-filter-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 1px solid #eee;
+  padding: 0.5em;
+  border-radius: 5px;
+}
+.pose-filter-label {
+  font-weight: bold;
+}
+.pose-filter-value {
+  font-style: italic;
+}
+input[type="checkbox"][data-state="any"] {
+  accent-color: grey;
+}
+input[type="checkbox"][data-state="exists"] {
+  accent-color: green;
+}
+input[type="checkbox"][data-state="missing"] {
+  accent-color: red;
+}

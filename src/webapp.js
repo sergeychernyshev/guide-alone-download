@@ -122,6 +122,7 @@ async function initialize() {
   });
 
   // --- WEB INTERFACE & ROUTES ---
+  app.use(express.static(path.join(__dirname, "public")));
   app.use("/", indexRouter);
 
   /**
