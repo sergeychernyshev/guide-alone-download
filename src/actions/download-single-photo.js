@@ -1,5 +1,6 @@
 const piexif = require("piexifjs");
 const { Readable } = require("stream");
+const { JpegEditor } = require("image-metadata-editor");
 const { getAuthenticatedClient } = require("../oauth");
 const { downloadPhoto } = require("../photo-manager");
 const {
@@ -105,7 +106,26 @@ async function downloadSinglePhoto(req, photo) {
       }
       exifObj["GPS"] = gpsData;
       const exifbytes = piexif.dump(exifObj);
-      const newData = piexif.insert(exifbytes, jpegData);
+      let newData = piexif.insert(exifbytes, jpegData);
+
+      if (typeof photo.pose.pitch === 'number' || typeof photo.pose.roll === 'number') {
+        const xmpString = `
+          <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.6-c148 79.164036, 2019/08/13-01:06:57        ">
+            <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+              <rdf:Description rdf:about=""
+                xmlns:GPano="http://ns.google.com/photos/1.0/panorama/">
+                <GPano:PosePitchDegrees>${photo.pose.pitch || 0}</GPano:PosePitchDegrees>
+                <GPano:PoseRollDegrees>${photo.pose.roll || 0}</GPano:PoseRollDegrees>
+              </rdf:Description>
+            </rdf:RDF>
+          </x:xmpmeta>
+        `;
+        const editor = new JpegEditor();
+        editor.load(Buffer.from(newData, "binary"));
+        editor.insertXmp(xmpString);
+        newData = editor.save().toString("binary");
+      }
+
       const newJpeg = Buffer.from(newData, "binary");
   
       // Create a readable stream from the photo data
