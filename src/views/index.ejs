@@ -302,6 +302,12 @@
       <% } %>
     </div>
 
+    <script>
+      const poseCounts = <%- JSON.stringify(poseCounts || {}) %>;
+      const downloadState = <%- JSON.stringify(downloadState || { inProgress: false }) %>;
+      const isLoggedIn = <%- isLoggedIn %>;
+      const missingPhotosCount = <%- notDownloadedCount %>;
+    </script>
     <script src="/js/main.js"></script>
   </body>
 </html>

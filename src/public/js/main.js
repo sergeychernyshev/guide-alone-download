@@ -294,11 +294,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-  const initialPoseCounts = JSON.parse(poseCounts);
-  updatePoseCounts(initialPoseCounts);
+  updatePoseCounts(poseCounts);
   toggleClearButton();
 
-  const downloadState = JSON.parse(downloadState);
   if (downloadState.inProgress) {
     document.getElementById("download-progress").style.display = "block";
     connectWebSocket();
