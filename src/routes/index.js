@@ -154,13 +154,7 @@ router.get("/", async (req, res, next) => {
     const paginatedPhotos = filteredPhotos.slice(startIndex, endIndex);
 
     const buildSortLink = (sortBy, label) => {
-      const currentSort = req.query.sort || "date";
-      const currentOrder = req.query.order || "desc";
-      let indicator = "";
-      if (currentSort === sortBy) {
-        indicator = currentOrder === "asc" ? " &uarr;" : " &darr;";
-      }
-      return `<a class="sort-link" href="#" data-sortby="${sortBy}">${label}${indicator}</a>`;
+      return `<a class="sort-link" href="#" data-sortby="${sortBy}">${label}</a>`;
     };
 
     const paginationHtmlTop = buildPaginationHtml(totalPages, page, 'changePage', 'top');
