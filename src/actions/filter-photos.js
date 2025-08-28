@@ -53,8 +53,8 @@ async function filterPhotos(req, ws, payload) {
       valA = new Date(a.captureTime);
       valB = new Date(b.captureTime);
     } else if (sort === 'views') {
-      valA = a.viewCount;
-      valB = b.viewCount;
+      valA = parseInt(a.viewCount, 10) || 0;
+      valB = parseInt(b.viewCount, 10) || 0;
     } else {
       valA = 0;
       valB = 0;
