@@ -3,10 +3,7 @@ const { downloadSinglePhoto } = require("./actions/download-single-photo");
 const { cancelDownload } = require("./actions/cancel-download");
 const { deleteDuplicates } = require("./actions/delete-duplicates");
 const { updatePhotoList } = require("./actions/update-photo-list");
-const { changePage } = require("./actions/change-page");
-const { searchPhotos } = require("./actions/search-photos");
 const { filterPhotos } = require("./actions/filter-photos");
-const { filterByPose } = require("./actions/filter-by-pose");
 
 
 /**
@@ -45,17 +42,8 @@ async function handleMessage(req, ws, message) {
     case "update-photo-list":
       await updatePhotoList(req);
       break;
-    case "change-page":
-      await changePage(req, ws, payload);
-      break;
-    case "search-photos":
-      await searchPhotos(req, ws, payload);
-      break;
     case "filter-photos":
       await filterPhotos(req, ws, payload);
-      break;
-    case "filter-by-pose":
-      await filterByPose(req, ws, payload.filters);
       break;
     default:
       console.log(`Unknown message type: ${type}`);

@@ -18,7 +18,7 @@ const {
   PHOTO_LIST_FILE_NAME,
 } = require("../drive-manager");
 const { getState } = require("../download-state");
-const { calculatePoseCounts, buildPhotoListHtml } = require("../utils/photo-utils");
+const { calculatePoseCounts, buildPhotoListHtml, buildPaginationHtml } = require("../utils/photo-utils");
 
 const router = express.Router();
 
@@ -132,8 +132,6 @@ router.get("/", async (req, res, next) => {
 
     if (loggedIn) {
       req.session.allPhotos = photos;
-      req.session.search = search;
-      req.session.status = status;
       const allDownloadedPhotos = photos.filter((p) => downloadedFiles.has(`${p.photoId.id}.jpg`));
       const allMissingPhotos = photos.filter((p) => !downloadedFiles.has(`${p.photoId.id}.jpg`));
       req.session.downloadedPhotos = allDownloadedPhotos;
@@ -165,65 +163,7 @@ router.get("/", async (req, res, next) => {
       return `<a class="sort-link" href="/?sort=${sortBy}&order=${order}&search=${search}&status=${status}">${label}${indicator}</a>`;
     };
 
-    let paginationHtml = "";
-    if (totalPages > 1) {
-      const buildPageClick = (page) => {
-        return `onclick="changePage(${page})"`;
-      };
-
-      paginationHtml += '<div class="pagination">';
-      if (page > 1) {
-        paginationHtml += `<button ${buildPageClick(page - 1)}>Previous</button>`;
-      }
-
-      const maxPagesToShow = 10;
-      let startPage, endPage;
-
-      if (totalPages <= maxPagesToShow) {
-        startPage = 1;
-        endPage = totalPages;
-      } else {
-        const maxPagesBeforeCurrent = Math.floor(maxPagesToShow / 2);
-        const maxPagesAfterCurrent = Math.ceil(maxPagesToShow / 2) - 1;
-        if (page <= maxPagesBeforeCurrent) {
-          startPage = 1;
-          endPage = maxPagesToShow;
-        } else if (page + maxPagesAfterCurrent >= totalPages) {
-          startPage = totalPages - maxPagesToShow + 1;
-          endPage = totalPages;
-        } else {
-          startPage = page - maxPagesBeforeCurrent;
-          endPage = page + maxPagesAfterCurrent;
-        }
-      }
-
-      if (startPage > 1) {
-        paginationHtml += `<button ${buildPageClick(1)}>1</button>`;
-        if (startPage > 2) {
-          paginationHtml += `<span>...</span>`;
-        }
-      }
-
-      for (let i = startPage; i <= endPage; i++) {
-        if (i === page) {
-          paginationHtml += `<button disabled>${i}</button>`;
-        } else {
-          paginationHtml += `<button ${buildPageClick(i)}>${i}</button>`;
-        }
-      }
-
-      if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-          paginationHtml += `<span>...</span>`;
-        }
-        paginationHtml += `<button ${buildPageClick(totalPages)}>${totalPages}</button>`;
-      }
-
-      if (page < totalPages) {
-        paginationHtml += `<button ${buildPageClick(page + 1)}>Next</button>`;
-      }
-      paginationHtml += "</div>";
-    }
+    const paginationHtml = buildPaginationHtml(totalPages, page, 'changePage');
 
     res.render("index", {
       isLoggedIn: loggedIn,

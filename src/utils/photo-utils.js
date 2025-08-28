@@ -69,4 +69,67 @@ function buildPhotoListHtml(photos, downloadedFiles) {
     .join("");
 }
 
-module.exports = { calculatePoseCounts, buildPhotoListHtml };
+function buildPaginationHtml(totalPages, currentPage, action) {
+  let paginationHtml = "";
+  if (totalPages > 1) {
+    const buildPageClick = (page) => {
+      return `onclick="${action}(${page})"`;
+    };
+
+    paginationHtml += '<div class="pagination">';
+    if (currentPage > 1) {
+      paginationHtml += `<button ${buildPageClick(currentPage - 1)}>Previous</button>`;
+    }
+
+    const maxPagesToShow = 10;
+    let startPage, endPage;
+
+    if (totalPages <= maxPagesToShow) {
+      startPage = 1;
+      endPage = totalPages;
+    } else {
+      const maxPagesBeforeCurrent = Math.floor(maxPagesToShow / 2);
+      const maxPagesAfterCurrent = Math.ceil(maxPagesToShow / 2) - 1;
+      if (currentPage <= maxPagesBeforeCurrent) {
+        startPage = 1;
+        endPage = maxPagesToShow;
+      } else if (currentPage + maxPagesAfterCurrent >= totalPages) {
+        startPage = totalPages - maxPagesToShow + 1;
+        endPage = totalPages;
+      } else {
+        startPage = currentPage - maxPagesBeforeCurrent;
+        endPage = currentPage + maxPagesAfterCurrent;
+      }
+    }
+
+    if (startPage > 1) {
+      paginationHtml += `<button ${buildPageClick(1)}>1</button>`;
+      if (startPage > 2) {
+        paginationHtml += `<span>...</span>`;
+      }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      if (i === currentPage) {
+        paginationHtml += `<button disabled>${i}</button>`;
+      } else {
+        paginationHtml += `<button ${buildPageClick(i)}>${i}</button>`;
+      }
+    }
+
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        paginationHtml += `<span>...</span>`;
+      }
+      paginationHtml += `<button ${buildPageClick(totalPages)}>${totalPages}</button>`;
+    }
+
+    if (currentPage < totalPages) {
+      paginationHtml += `<button ${buildPageClick(currentPage + 1)}>Next</button>`;
+    }
+    paginationHtml += "</div>";
+  }
+  return paginationHtml;
+}
+
+module.exports = { calculatePoseCounts, buildPhotoListHtml, buildPaginationHtml };
