@@ -105,7 +105,31 @@ router.get("/", async (req, res, next) => {
       });
     });
 
-    const filteredPhotos = poseFilteredPhotos;
+    const sort = req.query.sort || "date";
+    const order = req.query.order || "desc";
+
+    const sortedPhotos = poseFilteredPhotos.sort((a, b) => {
+      let valA, valB;
+
+      if (sort === 'date') {
+        valA = new Date(a.captureTime);
+        valB = new Date(b.captureTime);
+      } else if (sort === 'views') {
+        valA = parseInt(a.viewCount, 10) || 0;
+        valB = parseInt(b.viewCount, 10) || 0;
+      } else {
+        valA = 0;
+        valB = 0;
+      }
+
+      if (order === 'asc') {
+        return valA - valB;
+      } else {
+        return valB - valA;
+      }
+    });
+
+    const filteredPhotos = sortedPhotos;
 
     const totalPhotosCount = photos.length;
     const downloadedCount = photos.filter(p => downloadedFiles.has(`${p.photoId.id}.jpg`)).length;
@@ -154,20 +178,7 @@ router.get("/", async (req, res, next) => {
     const paginatedPhotos = filteredPhotos.slice(startIndex, endIndex);
 
     const buildSortLink = (sortBy, label) => {
-      const currentSort = req.query.sort || "date";
-      const currentOrder = req.query.order || "desc";
-      let order = "asc";
-      let indicator = "";
-      if (currentSort === sortBy) {
-        if (currentOrder === "asc") {
-          order = "desc";
-          indicator = " &uarr;";
-        } else {
-          order = "asc";
-          indicator = " &darr;";
-        }
-      }
-      return `<a class="sort-link" href="/?sort=${sortBy}&order=${order}&search=${search}&status=${status}">${label}${indicator}</a>`;
+      return `<a class="sort-link" href="#" data-sortby="${sortBy}">${label}</a>`;
     };
 
     const paginationHtmlTop = buildPaginationHtml(totalPages, page, 'changePage', 'top');

@@ -3,7 +3,7 @@ const { getDriveClient, listFiles, findOrCreateFolder, FOLDER_NAME } = require("
 const { buildPhotoListHtml, buildPaginationHtml, calculatePoseCounts } = require("../utils/photo-utils");
 
 async function filterPhotos(req, ws, payload) {
-  const { search, status, poseFilters, page } = payload;
+  const { search, status, poseFilters, page, sort, order } = payload;
   const { allPhotos } = req.session;
 
   const oAuth2Client = await getAuthenticatedClient(req);
@@ -14,7 +14,7 @@ async function filterPhotos(req, ws, payload) {
 
   // Calculate unfiltered counts
   const totalPhotosCount = allPhotos.length;
-  const downloadedCount = allPhotos.filter(p => downloadedFiles.has(`${p.photoId.id}.jpg`)).length;
+  const downloadedCount = allPhotos.filter(photo => downloadedFiles.has(`${photo.photoId.id}.jpg`)).length;
   const notDownloadedCount = totalPhotosCount - downloadedCount;
 
   // 1. Filter by search term
@@ -45,8 +45,30 @@ async function filterPhotos(req, ws, payload) {
     });
   });
 
-  // 4. Paginate
-  const photos = poseFilteredPhotos;
+  // 4. Sort
+  const sortedPhotos = poseFilteredPhotos.sort((a, b) => {
+    let valA, valB;
+
+    if (sort === 'date') {
+      valA = new Date(a.captureTime);
+      valB = new Date(b.captureTime);
+    } else if (sort === 'views') {
+      valA = parseInt(a.viewCount, 10) || 0;
+      valB = parseInt(b.viewCount, 10) || 0;
+    } else {
+      valA = 0;
+      valB = 0;
+    }
+
+    if (order === 'asc') {
+      return valA - valB;
+    } else {
+      return valB - valA;
+    }
+  });
+
+  // 5. Paginate
+  const photos = sortedPhotos;
   const pageSize = 50;
   const totalPages = Math.ceil(photos.length / pageSize);
   const currentPage = page || 1;

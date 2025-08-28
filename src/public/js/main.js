@@ -1,5 +1,40 @@
 let ws;
 
+function updateSortIndicators(sort, order) {
+  document.querySelectorAll('.sort-link').forEach(link => {
+    const sortBy = link.dataset.sortby;
+    // Clear existing arrows
+    const arrow = link.querySelector('.sort-arrow');
+    if (arrow) {
+      arrow.remove();
+    }
+
+    if (sortBy === sort) {
+      link.classList.add('active');
+      link.dataset.order = order;
+      const arrowSpan = document.createElement('span');
+      arrowSpan.className = 'sort-arrow';
+      arrowSpan.innerHTML = order === 'asc' ? ' &uarr;' : ' &darr;';
+      link.appendChild(arrowSpan);
+    } else {
+      link.classList.remove('active');
+      link.dataset.order = 'desc'; // Default for non-active links
+    }
+  });
+}
+
+function getFiltersFromQuery() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    search: params.get("search") || "",
+    status: params.get("status") || "all",
+    pose: params.get("pose")?.split(",").filter(Boolean) || [],
+    page: parseInt(params.get("page") || "1", 10),
+    sort: params.get("sort") || "date",
+    order: params.get("order") || "desc",
+  };
+}
+
 function getCurrentFilters() {
   const search = document.getElementById("search-input").value;
   const status = document
@@ -14,7 +49,9 @@ function getCurrentFilters() {
     new URLSearchParams(window.location.search).get("page") || "1",
     10
   );
-  return { search, status, poseFilters, page };
+  const sort = new URLSearchParams(window.location.search).get("sort") || "date";
+  const order = new URLSearchParams(window.location.search).get("order") || "desc";
+  return { search, status, poseFilters, page, sort, order };
 }
 
 function applyFilters(newFilters = {}) {
@@ -26,6 +63,8 @@ function applyFilters(newFilters = {}) {
     status: filters.status,
     poseFilters: filters.poseFilters,
     page: filters.page,
+    sort: filters.sort,
+    order: filters.order,
     location: newFilters.location, // Pass location for scrolling
     isPopState: newFilters.isPopState, // Flag for history handling
   };
@@ -38,6 +77,16 @@ function applyFilters(newFilters = {}) {
       ws.send(JSON.stringify({ type: "filter-photos", payload }));
     };
   }
+}
+
+function sortPhotos(sort) {
+  const currentOrder = new URLSearchParams(window.location.search).get("order") || "desc";
+  const currentSort = new URLSearchParams(window.location.search).get("sort") || "date";
+  let order = "asc";
+  if (currentSort === sort) {
+    order = currentOrder === "asc" ? "desc" : "asc";
+  }
+  applyFilters({ sort, order });
 }
 
 function changePage(page, location) {
@@ -81,7 +130,7 @@ function resetFilters() {
     .forEach((checkbox) => {
       setCheckboxState(checkbox, "any", true);
     });
-  applyFilters({ search: "", status: "all", poseFilters: [], page: 1 });
+  applyFilters({ search: "", status: "all", poseFilters: [], page: 1, sort: "date", order: "desc" });
 }
 
 function confirmDownload() {
@@ -173,7 +222,7 @@ function connectWebSocket() {
           "No photos match the current filters.";
       }
 
-      // 2. Update URL (if not a popstate event)
+      // 2. Update URL and sort UI (if not a popstate event)
       if (!requestPayload.isPopState) {
         const params = new URLSearchParams();
         if (requestPayload.search) params.set("search", requestPayload.search);
@@ -184,6 +233,8 @@ function connectWebSocket() {
           .join(",");
         if (poseQuery) params.set("pose", poseQuery);
         if (requestPayload.page > 1) params.set("page", requestPayload.page);
+        if (requestPayload.sort && requestPayload.sort !== 'date') params.set("sort", requestPayload.sort);
+        if (requestPayload.order && requestPayload.order !== 'desc') params.set("order", requestPayload.order);
 
         const newQueryString = params.toString()
           ? `?${params.toString()}`
@@ -193,7 +244,10 @@ function connectWebSocket() {
         }
       }
 
-      // 3. Scroll if needed
+      // 3. Update sort indicators
+      updateSortIndicators(requestPayload.sort, requestPayload.order);
+
+      // 4. Scroll if needed
       if (requestPayload.location === "bottom") {
         window.scrollTo(0, 0);
       }
@@ -251,16 +305,6 @@ function cycleCheckboxState(checkbox, silent = false) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  function getFiltersFromQuery() {
-    const params = new URLSearchParams(window.location.search);
-    return {
-      search: params.get("search") || "",
-      status: params.get("status") || "all",
-      pose: params.get("pose")?.split(",").filter(Boolean) || [],
-      page: parseInt(params.get("page") || "1", 10),
-    };
-  }
-
   window.addEventListener("popstate", (event) => {
     const filters = getFiltersFromQuery();
     document.getElementById("search-input").value = filters.search;
@@ -295,7 +339,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   updatePoseCounts(poseCounts);
+  updateSortIndicators(filters.sort, filters.order);
   toggleClearButton();
+
+  document.body.addEventListener('click', (event) => {
+    if (event.target.matches('.sort-link')) {
+      event.preventDefault();
+      sortPhotos(event.target.dataset.sortby);
+    }
+  });
 
   if (downloadState.inProgress) {
     document.getElementById("download-progress").style.display = "block";
