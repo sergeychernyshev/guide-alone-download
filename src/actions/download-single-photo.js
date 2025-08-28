@@ -97,7 +97,7 @@ async function downloadSinglePhoto(req, photo) {
           PosePitchDegrees: photo.pose.pitch || 0,
           PoseRollDegrees: photo.pose.roll || 0,
         };
-        newJpeg = await exiftool.write(newJpeg, tags);
+        newJpeg = await exiftool.write(newJpeg, tags, ['-overwrite_original']);
       }
   
       // Create a readable stream from the photo data
