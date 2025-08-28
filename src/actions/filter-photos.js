@@ -75,6 +75,7 @@ async function filterPhotos(req, ws, payload) {
         filteredTotal: photos.length,
         currentPage,
         totalPages,
+        requestPayload: payload, // Echo the original request payload
       },
     })
   );

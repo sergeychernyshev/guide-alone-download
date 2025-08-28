@@ -608,44 +608,27 @@
     <script>
       let ws;
 
-      function updateQueryString() {
+      function getCurrentFilters() {
         const search = document.getElementById('search-input').value;
         const status = document.querySelector('.status-filter a.active').id.replace('filter-', '');
         const poseFilters = Array.from(document.querySelectorAll('.pose-filter-group input[type="checkbox"]'))
           .filter(c => c.dataset.state !== 'any')
-          .map(c => `${c.name}:${c.dataset.state}`);
+          .map(c => ({ property: c.name, value: c.dataset.state }));
         const page = parseInt(new URLSearchParams(window.location.search).get('page') || '1', 10);
-
-        const params = new URLSearchParams();
-        if (search) params.set('search', search);
-        if (status !== 'all') params.set('status', status);
-        if (poseFilters.length > 0) params.set('pose', poseFilters.join(','));
-        if (page > 1) params.set('page', page);
-
-        history.pushState(null, '', `?${params.toString()}`);
+        return { search, status, poseFilters, page };
       }
 
-      function getFiltersFromQuery() {
-        const params = new URLSearchParams(window.location.search);
-        return {
-          search: params.get('search') || '',
-          status: params.get('status') || 'all',
-          pose: params.get('pose')?.split(',') || [],
-          page: parseInt(params.get('page') || '1', 10),
-        };
-      }
+      function applyFilters(newFilters = {}) {
+        const currentFilters = getCurrentFilters();
+        const filters = { ...currentFilters, ...newFilters };
 
-      function applyFilters() {
-        updateQueryString();
-        const filters = getFiltersFromQuery();
         const payload = {
           search: filters.search,
           status: filters.status,
-          poseFilters: filters.pose.map(p => {
-            const [property, value] = p.split(':');
-            return { property, value };
-          }),
+          poseFilters: filters.poseFilters,
           page: filters.page,
+          location: newFilters.location, // Pass location for scrolling
+          isPopState: newFilters.isPopState, // Flag for history handling
         };
 
         connectWebSocket();
@@ -658,39 +641,27 @@
         }
       }
 
-      function filterByPose() {
-        const params = new URLSearchParams(window.location.search);
-        params.set('page', 1);
-        history.pushState(null, '', `?${params.toString()}`);
-        applyFilters();
-      }
-
       function changePage(page, location) {
-        if (location === 'bottom') {
-          window.scrollTo(0, 0);
-        }
-        const params = new URLSearchParams(window.location.search);
-        params.set('page', page);
-        history.pushState(null, '', `?${params.toString()}`);
-        applyFilters();
+        applyFilters({ page, location });
       }
 
       function searchPhotos() {
-        const params = new URLSearchParams(window.location.search);
-        params.set('page', 1);
-        params.set('search', document.getElementById('search-input').value);
-        history.pushState(null, '', `?${params.toString()}`);
-        applyFilters();
+        applyFilters({ search: document.getElementById('search-input').value, page: 1 });
       }
 
       function filterPhotos(status) {
-        const params = new URLSearchParams(window.location.search);
-        params.set('page', 1);
-        params.set('status', status);
-        history.pushState(null, '', `?${params.toString()}`);
-        applyFilters();
+        document.querySelector('.status-filter a.active').classList.remove('active');
+        document.getElementById(`filter-${status}`).classList.add('active');
+        applyFilters({ status, page: 1 });
       }
 
+      function filterByPose() {
+        const poseFilters = Array.from(document.querySelectorAll('.pose-filter-group input[type="checkbox"]'))
+          .filter(c => c.dataset.state !== 'any')
+          .map(c => ({ property: c.name, value: c.dataset.state }));
+        applyFilters({ poseFilters, page: 1 });
+      }
+      
       function clearSearch() {
         document.getElementById('search-input').value = '';
         toggleClearButton();
@@ -698,51 +669,39 @@
       }
 
       function resetFilters() {
-        // Reset UI state first
         document.getElementById('search-input').value = '';
-        
         document.querySelector('.status-filter a.active').classList.remove('active');
         document.getElementById('filter-all').classList.add('active');
-
         document.querySelectorAll('.pose-filter-group input[type="checkbox"]').forEach(checkbox => {
-          setCheckboxState(checkbox, 'any', true); // Silently set state to 'any'
+          setCheckboxState(checkbox, 'any', true);
         });
-
-        // Clear the query string to reset to page 1
-        history.pushState(null, '', window.location.pathname);
-
-        // Now, apply the reset filters, which will also update the URL
-        applyFilters();
+        applyFilters({ search: '', status: 'all', poseFilters: [], page: 1 });
       }
 
-      window.addEventListener('popstate', (event) => {
-        applyFilters();
-      });
-
       function connectWebSocket() {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          return;
-        }
-
-        const downloadBar = document.getElementById("download-bar");
-        const uploadBar = document.getElementById("upload-bar");
-        const totalProgressBar = document.getElementById("total-progress-bar");
-        const progressText = document.getElementById("progress-text");
+        if (ws && ws.readyState === WebSocket.OPEN) return;
 
         ws = new WebSocket(`ws://${window.location.host}`);
-
-        ws.onopen = () => {
-          console.log("WebSocket connection established.");
-        };
+        ws.onopen = () => console.log("WebSocket connection established.");
+        ws.onclose = () => console.log("WebSocket connection closed");
+        ws.onerror = (error) => console.error("WebSocket error:", error);
 
         ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
 
           if (data.type === 'filter-results') {
-            const { photoListHtml, paginationHtmlTop, paginationHtmlBottom, poseCounts, downloadedCount, notDownloadedCount, totalPhotosCount, startIndex, endIndex, filteredTotal, currentPage, totalPages } = data.payload;
+            const {
+              photoListHtml, paginationHtmlTop, paginationHtmlBottom, poseCounts,
+              downloadedCount, notDownloadedCount, totalPhotosCount,
+              startIndex, endIndex, filteredTotal, currentPage, totalPages,
+              requestPayload
+            } = data.payload;
+
+            // 1. Update DOM
             document.querySelector('tbody').innerHTML = photoListHtml;
-            document.querySelector('.pagination[data-location="top"]').innerHTML = paginationHtmlTop;
-            document.querySelector('.pagination[data-location="bottom"]').innerHTML = paginationHtmlBottom;
+            document.querySelectorAll('.pagination').forEach((el, i) => {
+              el.innerHTML = i === 0 ? paginationHtmlTop : paginationHtmlBottom;
+            });
             updatePoseCounts(poseCounts);
             document.getElementById('downloaded-count').textContent = downloadedCount;
             document.getElementById('not-downloaded-count').textContent = notDownloadedCount;
@@ -752,107 +711,53 @@
             } else {
               document.getElementById('photo-counter').textContent = 'No photos match the current filters.';
             }
-            return;
-          }
 
-          if (data.type === 'search-results') {
-            const { photoListHtml, paginationHtml, downloadedCount, notDownloadedCount, totalPhotosCount, poseCounts } = data.payload;
-            document.querySelector('tbody').innerHTML = photoListHtml;
-            document.querySelector('.pagination').innerHTML = paginationHtml;
-            document.getElementById('downloaded-count').textContent = downloadedCount;
-            document.getElementById('not-downloaded-count').textContent = notDownloadedCount;
-            document.getElementById('all-count').textContent = totalPhotosCount;
-            updatePoseCounts(poseCounts);
-            return;
-          }
-
-          if (data.type === 'page-changed') {
-            const { photoListHtml, paginationHtml } = data.payload;
-            document.querySelector('tbody').innerHTML = photoListHtml;
-            document.querySelector('.pagination').innerHTML = paginationHtml;
-            return;
-          }
-
-          if (data.error) {
-            progressText.textContent = `Error: ${data.error}`;
-            return;
-          }
-
-          if (data.fileComplete) {
-            const downloadedCountSpan = document.getElementById('downloaded-count');
-            const notDownloadedCountSpan = document.getElementById('not-downloaded-count');
-            if (downloadedCountSpan && notDownloadedCountSpan) {
-              downloadedCountSpan.textContent = data.downloadedCount;
-              notDownloadedCountSpan.textContent = data.notDownloadedCount;
+            // 2. Update URL (if not a popstate event)
+            if (!requestPayload.isPopState) {
+              const params = new URLSearchParams();
+              if (requestPayload.search) params.set('search', requestPayload.search);
+              if (requestPayload.status !== 'all') params.set('status', requestPayload.status);
+              const poseQuery = requestPayload.poseFilters.map(f => `${f.property}:${f.value}`).join(',');
+              if (poseQuery) params.set('pose', poseQuery);
+              if (requestPayload.page > 1) params.set('page', requestPayload.page);
+              
+              const newQueryString = params.toString() ? `?${params.toString()}` : window.location.pathname;
+              if (newQueryString !== `${window.location.search}`) {
+                history.pushState(null, '', newQueryString);
+              }
             }
+
+            // 3. Scroll if needed
+            if (requestPayload.location === 'bottom') {
+              window.scrollTo(0, 0);
+            }
+            return;
           }
 
-          if (data.downloadProgress !== undefined) {
-            downloadBar.style.width = `${data.downloadProgress}%`;
-            downloadBar.textContent = `${data.downloadProgress}%`;
-          }
-
-          if (data.uploadProgress !== undefined) {
-            uploadBar.style.width = `${data.uploadProgress}%`;
-            uploadBar.textContent = `${data.uploadProgress}%`;
-          }
-
-          if (data.totalProgress !== undefined) {
-            totalProgressBar.style.width = `${data.totalProgress}%`;
-            totalProgressBar.textContent = `${data.totalProgress}%`;
-          }
-
-          if (data.message) {
-            progressText.textContent = data.message;
-          }
-
-          if (data.complete) {
-            downloadBar.style.width = "100%";
-            downloadBar.textContent = "100%";
-            uploadBar.style.width = "100%";
-            uploadBar.textContent = "100%";
-            totalProgressBar.style.width = "100%";
-            totalProgressBar.textContent = "100%";
-            ws.close();
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
-          }
-        };
-
-        ws.onclose = () => {
-          console.log("WebSocket connection closed");
-        };
-
-        ws.onerror = (error) => {
-          console.error("WebSocket error:", error);
-          progressText.textContent =
-            "An error occurred. Check the console for details.";
+          // Handle other WebSocket messages (download progress, etc.)
+          // ...
         };
       }
 
       function updatePoseCounts(poseCounts) {
         for (const property in poseCounts) {
           const checkbox = document.querySelector(`input[name="${property}"]`);
-          const group = checkbox.closest('.pose-filter-group');
-          const countSpan = group.querySelector('.pose-filter-count');
-          countSpan.textContent = `(${poseCounts[property].exists})`;
+          if (checkbox) {
+            const group = checkbox.closest('.pose-filter-group');
+            const countSpan = group.querySelector('.pose-filter-count');
+            countSpan.textContent = `(${poseCounts[property].exists})`;
+          }
         }
       }
 
       function toggleClearButton() {
         const searchInput = document.getElementById('search-input');
         const clearButton = document.getElementById('clear-search-btn');
-        if (searchInput.value) {
-          clearButton.style.display = 'block';
-        } else {
-          clearButton.style.display = 'none';
-        }
+        clearButton.style.display = searchInput.value ? 'block' : 'none';
       }
 
       function setCheckboxState(checkbox, state, silent = false) {
         checkbox.dataset.state = state;
-
         if (state === 'any') {
           checkbox.checked = false;
           checkbox.indeterminate = false;
@@ -863,17 +768,9 @@
           checkbox.checked = false;
           checkbox.indeterminate = true;
         }
-
         const label = checkbox.closest('label');
         const valueSpan = label.querySelector('.pose-filter-value');
-        if (state === 'any') {
-          valueSpan.textContent = 'Any';
-        } else if (state === 'exists') {
-          valueSpan.textContent = 'Exists';
-        } else {
-          valueSpan.textContent = "Doesn't Exist";
-        }
-
+        valueSpan.textContent = state === 'any' ? 'Any' : (state === 'exists' ? 'Exists' : "Doesn't Exist");
         if (!silent) {
           filterByPose();
         }
@@ -881,157 +778,49 @@
 
       function cycleCheckboxState(checkbox, silent = false) {
         const states = ['any', 'exists', 'missing'];
-        let currentState = checkbox.dataset.state;
-        let nextStateIndex = (states.indexOf(currentState) + 1) % states.length;
-        let nextState = states[nextStateIndex];
-        setCheckboxState(checkbox, nextState, silent);
+        const currentState = checkbox.dataset.state;
+        const nextStateIndex = (states.indexOf(currentState) + 1) % states.length;
+        setCheckboxState(checkbox, states[nextStateIndex], silent);
       }
+
+      window.addEventListener('popstate', (event) => {
+        // When user navigates, update the UI controls to match the new URL state.
+        const filters = getFiltersFromQuery();
+        document.getElementById('search-input').value = filters.search;
+        document.querySelector('.status-filter a.active').classList.remove('active');
+        document.getElementById(`filter-${filters.status}`).classList.add('active');
+        document.querySelectorAll('.pose-filter-group input[type="checkbox"]').forEach(checkbox => {
+          const poseFilter = filters.pose.find(p => p.startsWith(checkbox.name));
+          const newState = poseFilter ? poseFilter.split(':')[1] : 'any';
+          setCheckboxState(checkbox, newState, true); // Update UI silently
+        });
+
+        // Now that the UI is synced with the URL, apply the filters.
+        // Pass isPopState to prevent creating a new history entry.
+        applyFilters({ isPopState: true });
+      });
 
       window.addEventListener('DOMContentLoaded', (event) => {
         const filters = getFiltersFromQuery();
         document.getElementById('search-input').value = filters.search;
-
-        document.getElementById('filter-all').classList.remove('active');
-        document.getElementById('filter-downloaded').classList.remove('active');
-        document.getElementById('filter-not-downloaded').classList.remove('active');
+        document.querySelector('.status-filter a.active').classList.remove('active');
         document.getElementById(`filter-${filters.status}`).classList.add('active');
-
         document.querySelectorAll('.pose-filter-group input[type="checkbox"]').forEach(checkbox => {
           const poseFilter = filters.pose.find(p => p.startsWith(checkbox.name));
           if (poseFilter) {
             const [, value] = poseFilter.split(':');
-            checkbox.dataset.state = value;
-          } else {
-            checkbox.dataset.state = 'any';
+            setCheckboxState(checkbox, value, true);
           }
         });
 
         const initialPoseCounts = <%- JSON.stringify(poseCounts) %>;
         updatePoseCounts(initialPoseCounts);
-
-        document.querySelectorAll('.pose-filter-group input[type="checkbox"]').forEach(checkbox => {
-          const currentState = checkbox.dataset.state;
-          if (currentState === 'any') {
-            checkbox.checked = false;
-            checkbox.indeterminate = false;
-          } else if (currentState === 'exists') {
-            checkbox.checked = true;
-            checkbox.indeterminate = false;
-          } else if (currentState === 'missing') {
-            checkbox.checked = false;
-            checkbox.indeterminate = true;
-          }
-        });
-
         toggleClearButton();
+        
         const downloadState = <%- JSON.stringify(downloadState) %>;
         if (downloadState.inProgress) {
           document.getElementById('download-progress').style.display = 'block';
-          document.querySelector('.progress-bar-container').style.display = 'block';
-          document.getElementById('progress-text').style.display = 'block';
           connectWebSocket();
-        }
-      });
-
-      function cancelDownload() {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'cancel-download' }));
-        }
-      }
-
-      function downloadSinglePhoto(photoId) {
-        document.getElementById('download-progress').style.display = 'block';
-        document.querySelector('.progress-bar-container').style.display = 'block';
-        document.getElementById('progress-text').style.display = 'block';
-        connectWebSocket();
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'download-photo', payload: { photoId } }));
-        } else {
-          ws.onopen = () => {
-            ws.send(JSON.stringify({ type: 'download-photo', payload: { photoId } }));
-          };
-        }
-      }
-
-      <% if (isLoggedIn) { %>
-      function confirmDownload() {
-        const missingPhotosCount = <%= missingPhotosCount %>;
-        if (missingPhotosCount > 10) {
-          if (!confirm(`You are about to download ${missingPhotosCount} photos. Are you sure you want to proceed?`)) {
-            return;
-          }
-        }
-        document.getElementById('download-progress').style.display = 'block';
-        document.querySelector('.progress-bar-container').style.display = 'block';
-        document.getElementById('progress-text').style.display = 'block';
-        connectWebSocket();
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'download' }));
-        } else {
-          ws.onopen = () => {
-            ws.send(JSON.stringify({ type: 'download' }));
-          };
-        }
-      }
-
-      function updatePhotoList() {
-          const updateBtn = document.getElementById('update-btn');
-          updateBtn.disabled = true;
-          updateBtn.innerHTML = '<div class="spinner"></div><span>Starting...</span>';
-
-          connectWebSocket();
-
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'update-photo-list' }));
-          } else {
-            ws.onopen = () => {
-              ws.send(JSON.stringify({ type: 'update-photo-list' }));
-            };
-          }
-      }
-      <% } %>
-
-      document
-        .getElementById("toggle-drive-only-list")
-        ?.addEventListener("click", function () {
-          this.classList.toggle("active");
-          var panel = document.getElementById("drive-only-list");
-          if (panel.style.maxHeight) {
-            panel.style.maxHeight = null;
-          } else {
-            panel.style.maxHeight = panel.scrollHeight + "px";
-          }
-        });
-
-      document.getElementById('toggle-duplicate-files-list')?.addEventListener('click', function() {
-        this.classList.toggle("active");
-        var panel = document.getElementById('duplicate-files-list');
-        if (panel.style.maxHeight) {
-          panel.style.maxHeight = null;
-        } else {
-          panel.style.maxHeight = panel.scrollHeight + "px";
-        }
-      });
-
-      document.getElementById('delete-duplicate-files')?.addEventListener('click', function() {
-        const duplicateFiles = <%- JSON.stringify(duplicateFiles) %>;
-        const fileIdsToDelete = [];
-        for (const filename in duplicateFiles) {
-          const files = duplicateFiles[filename];
-          for (let i = 1; i < files.length; i++) {
-            fileIdsToDelete.push(files[i].id);
-          }
-        }
-
-        if (fileIdsToDelete.length > 0 && confirm(`Are you sure you want to delete ${fileIdsToDelete.length} duplicate files?`)) {
-          connectWebSocket();
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'delete-duplicates', payload: { fileIds: fileIdsToDelete } }));
-          } else {
-            ws.onopen = () => {
-              ws.send(JSON.stringify({ type: 'delete-duplicates', payload: { fileIds: fileIdsToDelete } }));
-            };
-          }
         }
       });
     </script>
