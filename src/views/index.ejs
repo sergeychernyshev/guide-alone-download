@@ -816,12 +816,15 @@
 
       window.addEventListener('hashchange', () => {
         const page = parseInt(window.location.hash.replace('#page=', ''), 10) || 1;
+        const selectedFilters = Array.from(document.querySelectorAll('.pose-filter-group input[type="checkbox"]')).map(checkbox => {
+          return { property: checkbox.name, value: checkbox.dataset.state };
+        });
         connectWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
+          ws.send(JSON.stringify({ type: 'change-page', payload: { page, filters: selectedFilters } }));
         } else {
           ws.onopen = () => {
-            ws.send(JSON.stringify({ type: 'change-page', payload: { page } }));
+            ws.send(JSON.stringify({ type: 'change-page', payload: { page, filters: selectedFilters } }));
           };
         }
       });

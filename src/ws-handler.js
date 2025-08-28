@@ -46,7 +46,7 @@ async function handleMessage(req, ws, message) {
       await updatePhotoList(req);
       break;
     case "change-page":
-      await changePage(req, ws, payload.page);
+      await changePage(req, ws, payload);
       break;
     case "search-photos":
       await searchPhotos(req, ws, payload);
