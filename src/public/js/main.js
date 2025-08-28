@@ -311,10 +311,10 @@ function downloadSinglePhoto(photoId) {
   document.getElementById("progress-text").style.display = "block";
   connectWebSocket();
   if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "download-single", payload: { photoId } }));
+    ws.send(JSON.stringify({ type: "download-photo", payload: { photoId } }));
   } else {
     ws.onopen = () => {
-      ws.send(JSON.stringify({ type: "download-single", payload: { photoId } }));
+      ws.send(JSON.stringify({ type: "download-photo", payload: { photoId } }));
     };
   }
 }
